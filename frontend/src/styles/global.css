@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+    --color-background: oklch(0.98 0.01 240);        /* Fast weiß, leicht bläulich */
+    --color-foreground: oklch(0.20 0.01 240);        /* Sehr dunkles Grau für Text */
+  
+    --color-primary-500: oklch(0.72 0.12 210);       /* Indigo/Blau (fokussiert) */
+    --color-primary-600: oklch(0.65 0.13 210);       /* Dunkler für Hover */
+    --color-primary-100: oklch(0.92 0.03 210);       /* Leichtes Blau für BG */
+  
+    --color-accent-500: oklch(0.75 0.11 170);        /* Türkis/Mint für CTA */
+    --color-accent-100: oklch(0.92 0.05 170);        /* Sanftes Mint */
+  
+    --color-success-500: oklch(0.75 0.12 140);       /* Grün für „Richtig“ */
+    --color-danger-500: oklch(0.68 0.14 25);         /* Rötlich für „Falsch“ */
+    --color-warning-500: oklch(0.80 0.12 85);        /* Gelb für Hinweis */
+  
+    --color-muted: oklch(0.85 0.01 240);             /* Inaktive Bereiche */
+    --color-border: oklch(0.80 0.01 240);            /* Rahmen */
+  }
