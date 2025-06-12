@@ -1,0 +1,42 @@
+---
+import RegisterForm from "../../components/auth/RegisterForm";
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout>
+    <div class="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+        <div class="w-full max-w-md">
+            <!-- Register Card -->
+            <div class="bg-background rounded-2xl shadow-lg border border-border p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                        Konto erstellen
+                    </h1>
+                    <p class="mt-2 text-foreground text-sm">
+                        Registriere dich, um mit dem Lernen zu beginnen
+                    </p>
+                </div>
+
+                <RegisterForm client:load />
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-foreground">
+                        Bereits ein Konto? 
+                        <a 
+                            href="/auth/login" 
+                            class="text-primary-500 hover:text-primary-600 font-medium transition-colors"
+                        >
+                            Jetzt anmelden
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Decorative elements -->
+            <div class="absolute inset-0 -z-10 overflow-hidden">
+                <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-100 rounded-full opacity-50 blur-3xl"></div>
+                <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-accent-100 rounded-full opacity-50 blur-3xl"></div>
+            </div>
+        </div>
+    </div>
+</Layout>

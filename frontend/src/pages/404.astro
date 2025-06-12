@@ -1,0 +1,73 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout>
+    <div class="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+        <div class="text-center max-w-2xl mx-auto">
+            <div class="mb-8 relative">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-32 h-32 rounded-full bg-primary-100 opacity-50 blur-2xl"></div>
+                </div>
+                <h1 class="text-8xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent relative">
+                    404
+                </h1>
+            </div>
+
+            <div class="space-y-4 mb-8">
+                <h2 class="text-2xl font-semibold text-foreground">
+                    Seite nicht gefunden
+                </h2>
+                <p class="text-foreground opacity-80">
+                    Entschuldigung, die gesuchte Seite existiert nicht oder wurde verschoben.
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a 
+                    href="/" 
+                    class="px-6 py-3 rounded-lg bg-primary-500 
+                           hover:bg-primary-600 text-white font-medium
+                           transition-colors duration-200
+                           focus:outline-none focus:ring-2 focus:ring-primary-500 
+                           focus:ring-offset-2 focus:ring-offset-background"
+                >
+                    Zur Startseite
+                </a>
+                <button 
+                    onclick="history.back()" 
+                    class="px-6 py-3 rounded-lg border border-border
+                           hover:bg-primary-100 text-foreground 
+                           font-medium transition-colors duration-200
+                           focus:outline-none focus:ring-2 focus:ring-primary-500 
+                           focus:ring-offset-2 focus:ring-offset-background"
+                >
+                    Zurück
+                </button>
+            </div>
+
+            <div class="absolute inset-0 -z-10 overflow-hidden">
+                <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-100 rounded-full opacity-30 blur-3xl"></div>
+                <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-accent-100 rounded-full opacity-30 blur-3xl"></div>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<style>
+    h1 {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+        100% {
+            transform: translateY(0px);
+        }
+    }
+</style>
