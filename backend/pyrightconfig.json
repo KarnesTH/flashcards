@@ -1,0 +1,23 @@
+{
+    "include": [
+        "**/*.py"
+    ],
+    "exclude": [
+        "**/env/**",
+        "**/migrations/**"
+    ],
+    "venvPath": ".",
+    "venv": "env",
+    "extraPaths": [
+        ".",
+        "backend",
+        "backend/env/lib/python3.13/site-packages"
+    ],
+    "typeCheckingMode": "strict",
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    "pythonVersion": "3.13",
+    "pythonPlatform": "Linux",
+    "useLibraryCodeForTypes": true,
+    "stubPath": "typings"
+}
