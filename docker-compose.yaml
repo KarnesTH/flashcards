@@ -1,0 +1,19 @@
+services:
+  flashcards-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - flashcards-network
+
+networks:
+  flashcards-network:
+    driver: bridge
+
+volumes:
+  flashcards-db:
+    driver: local
