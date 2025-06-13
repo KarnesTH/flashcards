@@ -1,0 +1,125 @@
+---
+import Layout from "../layouts/Layout.astro";
+import DashboardCard from "../components/dashboard/DashboardCard.tsx";
+
+const testDecks = [
+    {
+        id: 1,
+        owner: "KarnesTH",
+        title: "Deck 1",
+        description: "Dies ist der erste Deck",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: ["Tag 1", "Tag 2"],
+        cards: [
+            {
+                id: 1,
+                front: "Frage 1",
+                back: "Antwort 1",
+            }
+        ]
+    },
+    {
+        id: 2,
+        owner: "KarnesTH",
+        title: "Deck 2",
+        description: "Dies ist der zweite Deck",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: ["Tag 1", "Tag 2"],
+        cards: [
+            {
+                id: 1,
+                front: "Frage 1",
+                back: "Antwort 1",
+            }
+        ]
+    }
+]
+
+const stats = {
+    totalCards: 42,
+    decksCreated: 5,
+    cardsLearned: 128,
+    averageScore: 85
+};
+---
+
+<Layout>
+    <div class="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+        <div class="w-full max-w-7xl space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
+                    <h3 class="text-sm font-medium text-foreground/60">Gesamte Karten</h3>
+                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                        {stats.totalCards}
+                    </p>
+                </div>
+                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
+                    <h3 class="text-sm font-medium text-foreground/60">Erstellte Decks</h3>
+                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                        {stats.decksCreated}
+                    </p>
+                </div>
+                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
+                    <h3 class="text-sm font-medium text-foreground/60">Gelernte Karten</h3>
+                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                        {stats.cardsLearned}
+                    </p>
+                </div>
+                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
+                    <h3 class="text-sm font-medium text-foreground/60">Durchschnitt</h3>
+                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                        {stats.averageScore}%
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-background rounded-2xl shadow-lg border border-border p-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                            Deine Karteikarten
+                        </h1>
+                        <p class="text-foreground text-sm mt-1">
+                            Verwalte und erstelle deine Lernkarten
+                        </p>
+                    </div>
+                    <div class="flex gap-4 w-full md:w-auto">
+                        <button class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            Neues Deck
+                        </button>
+                        <div class="relative flex-1 md:w-64">
+                            <input 
+                                type="text" 
+                                placeholder="Suche..." 
+                                class="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button class="px-3 py-1 rounded-lg bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition-colors">
+                        Alle
+                    </button>
+                    <button class="px-3 py-1 rounded-lg bg-background border border-border text-foreground hover:bg-primary-500/10 transition-colors">
+                        Zuletzt bearbeitet
+                    </button>
+                    <button class="px-3 py-1 rounded-lg bg-background border border-border text-foreground hover:bg-primary-500/10 transition-colors">
+                        Meist gelernt
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {testDecks.map((deck) => (
+                        <DashboardCard {...deck} />
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>

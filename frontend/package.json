@@ -1,6 +1,12 @@
 {
   "name": "frontend",
   "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "Patrick Hähnel",
+    "email": "p_haehnel@hotmail.de",
+    "url": "https://github.com/KarnesTH"
+  },
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
