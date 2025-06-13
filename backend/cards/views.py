@@ -6,7 +6,7 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
 from .models import Deck, Card, Tag, LearningSession, CardReview, Badge, UserBadge
-from .serializer import (
+from .serializers import (
     DeckSerializer, DeckDetailSerializer, CardSerializer, TagSerializer,
     LearningSessionSerializer, CardReviewSerializer, BadgeSerializer, UserBadgeSerializer, UserSerializer
 )

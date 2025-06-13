@@ -17,7 +17,6 @@ interface DashboardCardProps {
 const DashboardCard = ({ title, description, tags, cards, createdAt, updatedAt }: DashboardCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    // Formatierung der Datumsangaben
     const formatDate = (date: Date) => {
         return new Intl.DateTimeFormat('de-DE', {
             day: '2-digit',

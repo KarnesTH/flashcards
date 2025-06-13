@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://localhost:8000/api/v1';
 
 interface LoginCredentials {
     username: string;
@@ -28,7 +28,7 @@ class ApiError extends Error {
 
 export const api = {
     async login(credentials: LoginCredentials): Promise<AuthResponse> {
-        const response = await fetch(`${API_URL}/token/`, {
+        const response = await fetch(`${API_URL}/auth/token/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
