@@ -13,6 +13,57 @@ Flashcards is a modular, AI-enhanced learning application designed to make study
 - **AI Module (Rust)**  
   Responsible for generating flashcard content automatically using AI models based on user-provided topics. The AI logic runs in a standalone Rust service, allowing for efficient, isolated processing.
 
+## 🏗️ Architecture
+
+```mermaid
+flowchart TD
+    subgraph Frontend
+        UI[fa:fa-desktop Astro + React UI]
+        MD[Markdown Rendering]
+        SRS[Spaced Repetition UI]
+        GAME[Gamification UI]
+    end
+
+    subgraph Backend
+        RESTfull[fa:fa-server Django REST API]
+        AUTH[Token Auth]
+        GAME_LOGIC[Gamification System]
+        SRS_LOGIC[Spaced Repetition Logic]
+    end
+
+    subgraph Endpoints
+        DECKS[Decks API]
+        CARDS[Cards API]
+        SESSIONS[Learning Sessions]
+        BADGES[Badges & Achievements]
+    end
+
+    subgraph LLM
+        AI[fa:fa-robot Rust Ollama Service]
+        GEN[Card Generation]
+    end
+
+    subgraph DB
+        SQL[fa:fa-database SQLite3/PostgreSQL]
+        MODELS[(Data Models)]
+    end
+
+    Frontend <--> Backend
+    Backend --> LLM
+    Backend <--> DB
+    Backend <--> Endpoints
+    
+    UI --> MD
+    UI --> SRS
+    UI --> GAME
+    
+    RESTfull --> AUTH
+    RESTfull --> GAME_LOGIC
+    RESTfull --> SRS_LOGIC
+    
+    DB --> MODELS
+```
+
 ---
 
 ### 🔍 Key Features
