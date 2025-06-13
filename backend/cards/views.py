@@ -1,12 +1,14 @@
 from rest_framework import viewsets, permissions, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.utils import timezone
+from rest_framework.views import APIView
+from django.contrib.auth.models import User
 from .models import Deck, Card, Tag, LearningSession, CardReview, Badge, UserBadge
 from .serializer import (
     DeckSerializer, DeckDetailSerializer, CardSerializer, TagSerializer,
-    LearningSessionSerializer, CardReviewSerializer, BadgeSerializer, UserBadgeSerializer
+    LearningSessionSerializer, CardReviewSerializer, BadgeSerializer, UserBadgeSerializer, UserSerializer
 )
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -143,3 +145,10 @@ class UserBadgeViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return UserBadge.objects.filter(user=self.request.user)
+
+class UserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)

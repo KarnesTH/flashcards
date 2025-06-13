@@ -2,18 +2,20 @@
 import NavbarList from "./NavbarList";
 import Logo from "../assets/logo.svg";
 ---
-<nav class="h-16 border-b border-border bg-background">
-	<div class="max-w-7xl mx-auto h-full px-4 flex items-center justify-between">
-		<!-- Logo -->
-        <div class="flex items-center gap-2">
-			<Logo class="h-12 w-12" />
+
+<nav class="h-16 border-b border-border bg-white shadow-sm">
+	<div class="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8">
+		<div class="flex items-center justify-between h-full">
+			<!-- Logo -->
 			<a href="/" class="flex items-center gap-2">
-				<span class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+				<Logo class="h-8 w-8" />
+				<span class="text-xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
 					Flashcards
 				</span>
 			</a>
-		</div>
 
-		<NavbarList client:load />
+			<!-- Navigation -->
+			<NavbarList client:load />
+		</div>
 	</div>
 </nav>

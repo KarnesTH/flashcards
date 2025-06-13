@@ -1,6 +1,7 @@
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    DeckViewSet, CardViewSet, TagViewSet, LearningSessionViewSet, CardReviewViewSet, BadgeViewSet, UserBadgeViewSet
+    DeckViewSet, CardViewSet, TagViewSet, LearningSessionViewSet, CardReviewViewSet, BadgeViewSet, UserBadgeViewSet, UserView
 )
 
 router = DefaultRouter()
@@ -12,4 +13,7 @@ router.register(r'card-reviews', CardReviewViewSet, basename='cardreview')
 router.register(r'badges', BadgeViewSet, basename='badge')
 router.register(r'user-badges', UserBadgeViewSet, basename='userbadge')
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('', include(router.urls)),
+    path('user/', UserView.as_view(), name='user'),
+]

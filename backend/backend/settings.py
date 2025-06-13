@@ -143,7 +143,7 @@ REST_FRAMEWORK = {
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React Development
-    "http://localhost:5173",  # Vite Development
+    "http://localhost:4321",  # Astro Development
     "https://flashcards.example.com",  # Production
 ]
 
