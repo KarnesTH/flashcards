@@ -1,15 +1,23 @@
-from rest_framework import viewsets, permissions, filters
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.response import Response
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, permissions, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth.models import User
-from .models import Deck, Card, Tag, LearningSession, CardReview, Badge, UserBadge
+
+from .models import Badge, Card, CardReview, Deck, LearningSession, Tag, UserBadge
 from .serializers import (
-    DeckSerializer, DeckDetailSerializer, CardSerializer, TagSerializer,
-    LearningSessionSerializer, CardReviewSerializer, BadgeSerializer, UserBadgeSerializer, UserSerializer
+    BadgeSerializer,
+    CardReviewSerializer,
+    CardSerializer,
+    DeckDetailSerializer,
+    DeckSerializer,
+    LearningSessionSerializer,
+    TagSerializer,
+    UserBadgeSerializer,
+    UserSerializer,
 )
+
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
@@ -26,14 +34,20 @@ class DeckViewSet(viewsets.ModelViewSet):
     """
     serializer_class = DeckSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_fields = ['is_public', 'tags']
     search_fields = ['title', 'description']
     ordering_fields = ['created_at', 'updated_at', 'title']
     ordering = ['-updated_at']
 
     def get_queryset(self):
-        return Deck.objects.filter(owner=self.request.user) | Deck.objects.filter(is_public=True)
+        filtered_decks_by_owner = Deck.objects.filter(owner=self.request.user)
+        filtered_decks_by_public = Deck.objects.filter(is_public=True)
+        return filtered_decks_by_owner | filtered_decks_by_public
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -54,12 +68,16 @@ class CardViewSet(viewsets.ModelViewSet):
     search_fields = ['front', 'back']
 
     def get_queryset(self):
-        return Card.objects.filter(deck__owner=self.request.user) | Card.objects.filter(deck__is_public=True)
+        filtered_cards_by_owner = Card.objects.filter(deck__owner=self.request.user)
+        filtered_cards_by_public = Card.objects.filter(deck__is_public=True)
+        return filtered_cards_by_owner | filtered_cards_by_public
 
     def perform_create(self, serializer):
         deck = serializer.validated_data['deck']
         if deck.owner != self.request.user:
-            raise permissions.PermissionDenied("Sie sind nicht der Besitzer dieses Decks.")
+            raise permissions.PermissionDenied(
+                "You are not the owner of this deck."
+            )
         serializer.save()
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -89,14 +107,16 @@ class LearningSessionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         deck = serializer.validated_data['deck']
         if deck.owner != self.request.user and not deck.is_public:
-            raise permissions.PermissionDenied("Sie haben keine Berechtigung für dieses Deck.")
+            raise permissions.PermissionDenied(
+                "You do not have permission to access this deck."
+            )
         serializer.save(user=self.request.user)
 
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         session = self.get_object()
         if session.status != 'active':
-            return Response({'error': 'Session ist bereits abgeschlossen.'}, status=400)
+            return Response({'error': 'Session is already completed.'}, status=400)
         session.status = 'completed'
         session.ended_at = timezone.now()
         session.save()
@@ -119,7 +139,9 @@ class CardReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         session = serializer.validated_data['session']
         if session.user != self.request.user:
-            raise permissions.PermissionDenied("Sie sind nicht der Besitzer dieser Session.")
+            raise permissions.PermissionDenied(
+                "You are not the owner of this session."
+            )
         serializer.save()
 
 class BadgeViewSet(viewsets.ReadOnlyModelViewSet):

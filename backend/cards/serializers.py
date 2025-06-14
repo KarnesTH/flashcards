@@ -1,6 +1,8 @@
-from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Deck, Card, Tag, LearningSession, CardReview, Badge, UserBadge
+from rest_framework import serializers
+
+from .models import Badge, Card, CardReview, Deck, LearningSession, Tag, UserBadge
+
 
 class UserSerializer(serializers.ModelSerializer):
     """
@@ -73,7 +75,16 @@ class LearningSessionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = LearningSession
-        fields = ('id', 'user', 'deck', 'deck_id', 'status', 'started_at', 'ended_at', 'reviews_count')
+        fields = (
+            'id', 
+            'user',
+            'deck',
+            'deck_id',
+            'status',
+            'started_at',
+            'ended_at',
+            'reviews_count',
+        )
         read_only_fields = ('started_at', 'ended_at', 'user')
 
     def get_reviews_count(self, obj):
@@ -81,7 +92,9 @@ class LearningSessionSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if data.get('ended_at') and data['ended_at'] < data.get('started_at'):
-            raise serializers.ValidationError("Endzeit kann nicht vor Startzeit liegen.")
+            raise serializers.ValidationError(
+                "End time cannot be before start time."
+            )
         return data
 
 class CardReviewSerializer(serializers.ModelSerializer):
@@ -109,7 +122,9 @@ class CardReviewSerializer(serializers.ModelSerializer):
 
     def validate_difficulty_rating(self, value):
         if value and (value < 1 or value > 5):
-            raise serializers.ValidationError("Schwierigkeitsgrad muss zwischen 1 und 5 liegen.")
+            raise serializers.ValidationError(
+                "Difficulty rating must be between 1 and 5."
+            )
         return value
 
 class BadgeSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 
 
@@ -62,8 +62,16 @@ class LearningSession(models.Model):
         COMPLETED = 'completed', _('Abgeschlossen')
         ABANDONED = 'abandoned', _('Abgebrochen')
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='learning_sessions')
-    deck = models.ForeignKey(Deck, on_delete=models.CASCADE, related_name='learning_sessions')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='learning_sessions',
+    )
+    deck = models.ForeignKey(
+        Deck,
+        on_delete=models.CASCADE,
+        related_name='learning_sessions',
+    )
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -82,8 +90,16 @@ class CardReview(models.Model):
     """
     Review of a card in a learning session
     """
-    session = models.ForeignKey(LearningSession, on_delete=models.CASCADE, related_name='reviews')
-    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='reviews')
+    session = models.ForeignKey(
+        LearningSession,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+    card = models.ForeignKey(
+        Card,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
     is_correct = models.BooleanField(default=False)
     difficulty_rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
@@ -131,8 +147,14 @@ class UserBadge(models.Model):
     """
     Badge of a user
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='badges')
-    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name='users')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='badges',
+    )
+    badge = models.ForeignKey(
+        Badge,
+        on_delete=models.CASCADE, related_name='users')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

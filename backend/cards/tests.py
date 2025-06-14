@@ -1,9 +1,11 @@
-from django.test import TestCase
 from django.contrib.auth.models import User
+from django.test import TestCase
 from django.urls import reverse
-from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from .models import Deck, Card, Tag, LearningSession, CardReview, Badge, UserBadge
+from rest_framework.test import APIClient, APITestCase
+
+from .models import Card, Deck, LearningSession, Tag
+
 
 class ModelTests(TestCase):
     """

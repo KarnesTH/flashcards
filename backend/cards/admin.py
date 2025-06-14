@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Deck, Card, Tag, LearningSession, CardReview, Badge, UserBadge
+
+from .models import Badge, Card, CardReview, Deck, LearningSession, Tag, UserBadge
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -54,7 +56,14 @@ class CardReviewAdmin(admin.ModelAdmin):
     Admin for CardReview-Model
     This model is used to store the reviews of a card in a learning session.
     """
-    list_display = ('session', 'card', 'is_correct', 'difficulty_rating', 'time_taken', 'created_at')
+    list_display = (
+        'session',
+        'card',
+        'is_correct',
+        'difficulty_rating',
+        'time_taken',
+        'created_at',
+    )
     list_filter = ('is_correct', 'difficulty_rating', 'created_at')
     search_fields = ('session__user__username', 'card__front')
     raw_id_fields = ('session', 'card')

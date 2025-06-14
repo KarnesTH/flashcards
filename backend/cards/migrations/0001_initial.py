@@ -18,11 +18,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Badge',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID',
+                )),
                 ('name', models.CharField(max_length=255, unique=True)),
                 ('description', models.TextField()),
                 ('icon', models.ImageField(upload_to='badges/')),
-                ('condition', models.CharField(choices=[('first_deck', 'Erstes Deck erstellt'), ('first_review', 'Erste Karte bewertet'), ('perfect_session', 'Perfekte Lernsession'), ('deck_master', 'Deck-Meister'), ('review_streak', 'Lernstreak')], max_length=50, unique=True)),
+                ('condition', models.CharField(
+                    choices=[
+                        ('first_deck', 'First Deck Created'),
+                        ('first_review', 'First Card Reviewed'),
+                        ('perfect_session', 'Perfect Learning Session'),
+                        ('deck_master', 'Deck Master'),
+                        ('review_streak', 'Review Streak'),
+                    ], max_length=50, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],
@@ -33,7 +45,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Tag',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID',
+                )),
                 ('name', models.CharField(max_length=255, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
@@ -45,13 +62,22 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Deck',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID',
+                )),
                 ('title', models.CharField(max_length=255)),
                 ('description', models.TextField()),
                 ('is_public', models.BooleanField(default=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='decks', to=settings.AUTH_USER_MODEL)),
+                ('owner', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='decks',
+                    to=settings.AUTH_USER_MODEL,
+                )),
                 ('tags', models.ManyToManyField(related_name='decks', to='cards.tag')),
             ],
             options={
@@ -61,13 +87,22 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Card',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID',
+                )),
                 ('front', models.TextField()),
                 ('back', models.TextField()),
                 ('order', models.PositiveIntegerField(default=0)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deck', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cards', to='cards.deck')),
+                ('deck', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='cards',
+                    to='cards.deck',
+                )),
             ],
             options={
                 'ordering': ['order', 'created_at'],
@@ -76,12 +111,29 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='LearningSession',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('active', 'Aktiv'), ('completed', 'Abgeschlossen'), ('abandoned', 'Abgebrochen')], default='active', max_length=20)),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID',
+                )),
+                ('status', models.CharField(
+                    choices=[
+                        ('active', 'Active'),
+                        ('completed', 'Completed'),
+                        ('abandoned', 'Abandoned'),
+                    ],
+                    default='active', max_length=20)),
                 ('started_at', models.DateTimeField(auto_now_add=True)),
                 ('ended_at', models.DateTimeField(blank=True, null=True)),
-                ('deck', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='learning_sessions', to='cards.deck')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='learning_sessions', to=settings.AUTH_USER_MODEL)),
+                ('deck', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='learning_sessions',
+                    to='cards.deck',
+                )),
+                ('user', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='learning_sessions', to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'ordering': ['-started_at'],
@@ -90,13 +142,31 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CardReview',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID',
+                )),
                 ('is_correct', models.BooleanField(default=False)),
-                ('difficulty_rating', models.PositiveIntegerField(blank=True, null=True, validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)])),
+                ('difficulty_rating', models.PositiveIntegerField(
+                    blank=True,
+                    null=True,
+                    validators=[
+                        django.core.validators.MinValueValidator(1),
+                        django.core.validators.MaxValueValidator(5),
+                    ],
+                )),
                 ('time_taken', models.IntegerField(default=0)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('card', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to='cards.card')),
-                ('session', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to='cards.learningsession')),
+                ('card', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='reviews',
+                    to='cards.card',
+                )),
+                ('session', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='reviews', to='cards.learningsession')),
             ],
             options={
                 'ordering': ['-created_at'],
@@ -105,10 +175,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='UserBadge',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(
+                    auto_created=True,
+                    primary_key=True,
+                    serialize=False,
+                    verbose_name='ID',
+                )),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('badge', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='users', to='cards.badge')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='badges', to=settings.AUTH_USER_MODEL)),
+                ('badge', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='users',
+                    to='cards.badge',
+                )),
+                ('user', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='badges',
+                    to=settings.AUTH_USER_MODEL,
+                )),
             ],
             options={
                 'ordering': ['-created_at'],
