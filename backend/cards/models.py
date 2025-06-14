@@ -22,7 +22,11 @@ class Deck(models.Model):
     """
     Deck of cards
     """
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='decks')
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='decks',
+    )
     title = models.CharField(max_length=255)
     description = models.TextField()
     tags = models.ManyToManyField(Tag, related_name='decks')
@@ -40,7 +44,11 @@ class Card(models.Model):
     """
     Card in a deck
     """
-    deck = models.ForeignKey(Deck, on_delete=models.CASCADE, related_name='cards')
+    deck = models.ForeignKey(
+        Deck,
+        on_delete=models.CASCADE,
+        related_name='cards',
+    )
     front = models.TextField()
     back = models.TextField()
     order = models.PositiveIntegerField(default=0)
@@ -106,7 +114,7 @@ class CardReview(models.Model):
         null=True,
         blank=True
     )
-    time_taken = models.IntegerField(default=0)  # in Sekunden
+    time_taken = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

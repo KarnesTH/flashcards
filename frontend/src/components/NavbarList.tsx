@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
-export default function NavbarList() {
+const NavbarList = () => {
     const [user, setUser] = useState<{ username: string } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -203,3 +203,5 @@ export default function NavbarList() {
         </>
     );
 }
+
+export default NavbarList;

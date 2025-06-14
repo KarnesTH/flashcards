@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../../lib/api';
 
-export default function LoginForm() {
+const LoginForm = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,3 +74,5 @@ export default function LoginForm() {
         </form>
     );
 } 
+
+export default LoginForm;
