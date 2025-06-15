@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import DashboardCard from "../components/dashboard/DashboardCard.tsx";
+import DashboardStats from "../components/dashboard/DashboardStats";
 
 const testDecks = [
     {
@@ -32,6 +33,11 @@ const testDecks = [
                 id: 1,
                 front: "Frage 1",
                 back: "Antwort 1",
+            },
+            {
+                id: 2,
+                front: "Frage 2",
+                back: "Antwort 2",
             }
         ]
     }
@@ -48,32 +54,7 @@ const stats = {
 <Layout title="Dashboard - Flashcards">
     <div class="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
         <div class="w-full max-w-7xl space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
-                    <h3 class="text-sm font-medium text-foreground/60">Gesamte Karten</h3>
-                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                        {stats.totalCards}
-                    </p>
-                </div>
-                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
-                    <h3 class="text-sm font-medium text-foreground/60">Erstellte Decks</h3>
-                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                        {stats.decksCreated}
-                    </p>
-                </div>
-                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
-                    <h3 class="text-sm font-medium text-foreground/60">Gelernte Karten</h3>
-                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                        {stats.cardsLearned}
-                    </p>
-                </div>
-                <div class="bg-background rounded-2xl shadow-lg border border-border p-6">
-                    <h3 class="text-sm font-medium text-foreground/60">Durchschnitt</h3>
-                    <p class="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                        {stats.averageScore}%
-                    </p>
-                </div>
-            </div>
+            <DashboardStats client:load cards={stats.totalCards} decks={stats.decksCreated} learnedCards={stats.cardsLearned} averageScore={stats.averageScore} />
 
             <div class="bg-background rounded-2xl shadow-lg border border-border p-8">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">

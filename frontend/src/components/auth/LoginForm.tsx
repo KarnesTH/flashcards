@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { api } from '../../lib/api';
+import type { LoginErrors } from '../../types/errors';
+import type { LoginFormData } from '../../types/types';
 
 const LoginForm = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [formData, setFormData] = useState<LoginFormData>({
+        username: '',
+        password: ''
+    });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<LoginErrors | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -13,13 +17,13 @@ const LoginForm = () => {
         setError(null);
 
         try {
-            await api.login({ username, password });
+            await api.login(formData);
             window.location.href = '/dashboard';
         } catch (err) {
             if (err instanceof Error) {
-                setError(err.message);
+                setError({ message: err.message });
             } else {
-                setError('Ein unbekannter Fehler ist aufgetreten');
+                setError({ message: 'Ein unbekannter Fehler ist aufgetreten' });
             }
         } finally {
             setIsSubmitting(false);
@@ -29,8 +33,8 @@ const LoginForm = () => {
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-                <div className="bg-danger-50 border border-danger-200 text-danger-600 px-4 py-3 rounded-lg">
-                    {error}
+                <div className="bg-transparent border-2 border-danger-500 text-danger-500 px-4 py-3 rounded-lg">
+                    {error.message}
                 </div>
             )}
             
@@ -41,8 +45,8 @@ const LoginForm = () => {
                 <input
                     type="text"
                     id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     required
                     className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
                     disabled={isSubmitting}
@@ -56,8 +60,8 @@ const LoginForm = () => {
                 <input
                     type="password"
                     id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                     className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
                     disabled={isSubmitting}

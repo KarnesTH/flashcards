@@ -33,7 +33,7 @@ const DashboardCard = ({ title, description, tags, cards, createdAt, updatedAt }
                         {title}
                     </h3>
                     <p className="text-foreground/60 text-sm mt-1">
-                        {cards.length} Karten
+                        {cards.length} {cards.length === 1 ? 'Karte' : 'Karten'}
                     </p>
                 </div>
                 <button 

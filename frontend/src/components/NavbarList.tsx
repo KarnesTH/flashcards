@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
+import type { User } from '../types/types';
 
 const NavbarList = () => {
-    const [user, setUser] = useState<{ username: string } | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -10,7 +11,7 @@ const NavbarList = () => {
         checkAuth();
     }, []);
 
-    async function checkAuth() {
+    const checkAuth = async () => {
         try {
             const userData = await api.getCurrentUser();
             setUser(userData);
@@ -21,7 +22,7 @@ const NavbarList = () => {
         }
     }
 
-    async function handleLogout() {
+    const handleLogout = async () => {
         await api.logout();
         setUser(null);
         window.location.href = '/auth/login';
