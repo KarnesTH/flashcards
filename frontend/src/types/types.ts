@@ -54,3 +54,25 @@ export interface LoginFormData {
     username: string;
     password: string;
 }
+
+// Settings Form Data
+export interface SettingsFormData {
+    email: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    privacySettings: {
+        showStats: boolean;
+        showDecks: boolean;
+        showProgress: boolean;
+    };
+    notifications: {
+        emailNotifications: boolean;
+        learningReminders: boolean;
+        achievementAlerts: boolean;
+    };
+    appearance: {
+        theme: 'light' | 'dark' | 'system';
+        fontSize: 'small' | 'medium' | 'large';
+    };
+}

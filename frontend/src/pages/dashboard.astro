@@ -2,16 +2,19 @@
 import Layout from "../layouts/Layout.astro";
 import DashboardCard from "../components/dashboard/DashboardCard.tsx";
 import DashboardStats from "../components/dashboard/DashboardStats";
+import type { Deck, Stats } from "../types/types";
 
-const testDecks = [
+const testDecks: Deck[] = [
     {
         id: 1,
-        owner: "KarnesTH",
         title: "Deck 1",
         description: "Dies ist der erste Deck",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tags: ["Tag 1", "Tag 2"],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        tags: [
+            { id: 1, name: "Tag 1" },
+            { id: 2, name: "Tag 2" }
+        ],
         cards: [
             {
                 id: 1,
@@ -22,12 +25,14 @@ const testDecks = [
     },
     {
         id: 2,
-        owner: "KarnesTH",
         title: "Deck 2",
         description: "Dies ist der zweite Deck",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tags: ["Tag 1", "Tag 2"],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        tags: [
+            { id: 1, name: "Tag 1" },
+            { id: 2, name: "Tag 2" }
+        ],
         cards: [
             {
                 id: 1,
@@ -41,9 +46,9 @@ const testDecks = [
             }
         ]
     }
-]
+];
 
-const stats = {
+const stats: Stats = {
     totalCards: 42,
     decksCreated: 5,
     cardsLearned: 128,

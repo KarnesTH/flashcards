@@ -1,28 +1,25 @@
 import { useState } from "react";
+import type { Card, Tag } from "../../types/types";
 
 interface DashboardCardProps {
     id: number;
     title: string;
     description: string;
-    tags: string[];
-    cards: {
-        id: number;
-        front: string;
-        back: string;
-    }[];
-    createdAt: Date;
-    updatedAt: Date;
+    tags: Tag[];
+    cards: Card[];
+    createdAt: string;  // ISO-String
+    updatedAt: string;  // ISO-String
 }
 
 const DashboardCard = ({ title, description, tags, cards, createdAt, updatedAt }: DashboardCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    const formatDate = (date: Date) => {
+    const formatDate = (dateString: string) => {
         return new Intl.DateTimeFormat('de-DE', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-        }).format(date);
+        }).format(new Date(dateString));
     };
 
     return (
@@ -61,7 +58,7 @@ const DashboardCard = ({ title, description, tags, cards, createdAt, updatedAt }
                         key={index}
                         className="text-xs px-2 py-1 rounded-md bg-primary-500/10 text-primary-500"
                     >
-                        {tag}
+                        {tag.name}
                     </span>
                 ))}
             </div>

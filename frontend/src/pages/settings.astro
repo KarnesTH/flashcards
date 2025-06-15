@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import SettingsForm from '../components/settings/SettingsForm';
 ---
 
 <Layout title="Einstellungen - Flashcards">
@@ -12,8 +13,31 @@ import Layout from '../layouts/Layout.astro';
                             Einstellungen
                         </h1>
                         <p class="text-foreground text-sm mt-1">
-                            Verwalte deine Einstellungen
+                            Verwalte deine privaten Einstellungen und Präferenzen
                         </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1">
+                        <nav class="space-y-1">
+                            <a href="#account" class="block px-4 py-2 rounded-lg bg-primary-500/10 text-primary-500">
+                                Account
+                            </a>
+                            <a href="#privacy" class="block px-4 py-2 rounded-lg text-foreground/60 hover:bg-primary-500/10 hover:text-primary-500 transition-colors">
+                                Privatsphäre
+                            </a>
+                            <a href="#notifications" class="block px-4 py-2 rounded-lg text-foreground/60 hover:bg-primary-500/10 hover:text-primary-500 transition-colors">
+                                Benachrichtigungen
+                            </a>
+                            <a href="#appearance" class="block px-4 py-2 rounded-lg text-foreground/60 hover:bg-primary-500/10 hover:text-primary-500 transition-colors">
+                                Erscheinungsbild
+                            </a>
+                        </nav>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <SettingsForm client:load />
                     </div>
                 </div>
             </div>
