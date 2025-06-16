@@ -1,8 +1,79 @@
-from django.contrib.auth.models import User
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator, FileExtensionValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+class User(AbstractUser):
+    """
+    User model
+    """
+    avatar = models.ImageField(
+        upload_to='avatars/',
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif'])],
+        help_text=_('Profilbild des Benutzers')
+    )
+    bio = models.TextField(
+        max_length=500,
+        blank=True,
+        help_text=_('Kurze Beschreibung des Benutzers')
+    )
+    total_cards_created = models.PositiveIntegerField(
+        default=0,
+        help_text=_('Gesamtzahl der erstellten Karten')
+    )
+    total_cards_reviewed = models.PositiveIntegerField(
+        default=0,
+        help_text=_('Gesamtzahl der wiederholten Karten')
+    )
+    total_learning_sessions = models.PositiveIntegerField(
+        default=0,
+        help_text=_('Gesamtzahl der Lern-Sessions')
+    )
+    average_accuracy = models.FloatField(
+        default=0.0,
+        help_text=_('Durchschnittliche Genauigkeit bei Kartenwiederholungen')
+    )
+    last_active = models.DateTimeField(
+        auto_now=True,
+        help_text=_('Letzte Aktivität des Benutzers')
+    )
+
+    class Meta:
+        verbose_name = _('Benutzer')
+        verbose_name_plural = _('Benutzer')
+        ordering = ['-date_joined']
+
+    def __str__(self):
+        return self.username
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.username
+
+    def update_statistics(self):
+        """
+        Update user statistics based on current data
+        """
+        from .models import Card, CardReview, LearningSession
+        
+        self.total_cards_created = Card.objects.filter(deck__owner=self).count()
+        self.total_cards_reviewed = CardReview.objects.filter(session__user=self).count()
+        self.total_learning_sessions = LearningSession.objects.filter(user=self).count()
+        
+        reviews = CardReview.objects.filter(session__user=self)
+        if reviews.exists():
+            self.average_accuracy = reviews.filter(is_correct=True).count() / reviews.count() * 100
+        else:
+            self.average_accuracy = 0.0
+            
+        self.save(update_fields=[
+            'total_cards_created',
+            'total_cards_reviewed',
+            'total_learning_sessions',
+            'average_accuracy',
+            'last_active'
+        ])
 
 class Tag(models.Model):
     """
@@ -23,7 +94,7 @@ class Deck(models.Model):
     Deck of cards
     """
     owner = models.ForeignKey(
-        User,
+        'User',
         on_delete=models.CASCADE,
         related_name='decks',
     )
@@ -71,7 +142,7 @@ class LearningSession(models.Model):
         ABANDONED = 'abandoned', _('Abgebrochen')
 
     user = models.ForeignKey(
-        User,
+        'User',
         on_delete=models.CASCADE,
         related_name='learning_sessions',
     )
@@ -156,7 +227,7 @@ class UserBadge(models.Model):
     Badge of a user
     """
     user = models.ForeignKey(
-        User,
+        'User',
         on_delete=models.CASCADE,
         related_name='badges',
     )
@@ -209,7 +280,7 @@ class Settings(models.Model):
         ACHIEVEMENT_ALERTS = 'achievement_alerts', _('Erfolgsbenachrichtigungen')
 
     user = models.OneToOneField(
-        User,
+        'User',
         on_delete=models.CASCADE,
         related_name='settings',
     )

@@ -10,7 +10,6 @@ from .views import (
     SettingsViewSet,
     TagViewSet,
     UserBadgeViewSet,
-    UserView,
 )
 
 router = DefaultRouter()
@@ -41,5 +40,4 @@ router.register(
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('user/', UserView.as_view(), name='user'),
 ]

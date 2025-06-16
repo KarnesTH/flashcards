@@ -9,6 +9,7 @@ from .models import (
     Settings,
     Tag,
     UserBadge,
+    User,
 )
 
 
@@ -118,3 +119,14 @@ class SettingsAdmin(admin.ModelAdmin):
     )
     raw_id_fields = ('user',)
     ordering = ('-updated_at',)
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    """
+    Admin for User-Model
+    This model is used to store the users of the application.
+    """
+    list_display = ('username', 'email', 'is_active', 'is_staff', 'date_joined')
+    list_filter = ('is_active', 'is_staff', 'date_joined')
+    search_fields = ('username', 'email')
+    ordering = ('-date_joined',)

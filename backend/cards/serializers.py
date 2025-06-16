@@ -1,4 +1,5 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from .models import (
@@ -12,15 +13,70 @@ from .models import (
     UserBadge,
 )
 
+User = get_user_model()
 
-class UserSerializer(serializers.ModelSerializer):
+class CustomUserCreateSerializer(UserCreateSerializer):
     """
-    Serializer for User-Model
+    Custom Serializer für die Benutzerregistrierung
     """
-    class Meta:
+    class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ['id', 'username', 'email']
-        read_only_fields = ['id']
+        fields = (
+            'id',
+            'username',
+            'email',
+            'password',
+            'first_name',
+            'last_name',
+        )
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'email': {'required': True},
+        }
+
+class CustomUserSerializer(UserSerializer):
+    """
+    Custom Serializer für Benutzerdaten
+    """
+    statistics = serializers.SerializerMethodField()
+    settings = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        model = User
+        fields = (
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'avatar',
+            'bio',
+            'date_joined',
+            'last_active',
+            'statistics',
+            'settings',
+        )
+        read_only_fields = (
+            'id',
+            'date_joined',
+            'last_active',
+            'statistics',
+            'settings',
+        )
+
+    def get_statistics(self, obj):
+        return {
+            'total_cards_created': obj.total_cards_created,
+            'total_cards_reviewed': obj.total_cards_reviewed,
+            'total_learning_sessions': obj.total_learning_sessions,
+            'average_accuracy': obj.average_accuracy,
+        }
+
+    def get_settings(self, obj):
+        try:
+            return SettingsSerializer(obj.settings).data
+        except Settings.DoesNotExist:
+            return None
 
 class TagSerializer(serializers.ModelSerializer):
     """
@@ -50,7 +106,7 @@ class DeckSerializer(serializers.ModelSerializer):
     """
     Serializer for Deck-Model
     """
-    owner = UserSerializer(read_only=True)
+    owner = CustomUserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     cards_count = serializers.SerializerMethodField()
     
@@ -73,7 +129,7 @@ class LearningSessionSerializer(serializers.ModelSerializer):
     """
     Serializer for LearningSession-Model
     """
-    user = UserSerializer(read_only=True)
+    user = CustomUserSerializer(read_only=True)
     deck = DeckSerializer(read_only=True)
     deck_id = serializers.PrimaryKeyRelatedField(
         queryset=Deck.objects.all(),
@@ -150,7 +206,7 @@ class UserBadgeSerializer(serializers.ModelSerializer):
     """
     Serializer for UserBadge-Model
     """
-    user = UserSerializer(read_only=True)
+    user = CustomUserSerializer(read_only=True)
     badge = BadgeSerializer(read_only=True)
     
     class Meta:

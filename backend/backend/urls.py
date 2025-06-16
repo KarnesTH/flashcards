@@ -16,19 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework import permissions
-from rest_framework.authtoken.views import obtain_auth_token
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
         title="Flashcards API",
         default_version='v1',
-        description="Flashcards API",
-        terms_of_service="https://www.example.com/terms/",
-        contact=openapi.Contact(email="contact@example.com"),
-        license=openapi.License(name="BSD License"),
+        description="API für die Flashcards-Anwendung",
+        terms_of_service="https://flashcards.example.com/terms/",
+        contact=openapi.Contact(email="contact@flashcards.example.com"),
+        license=openapi.License(name="MIT License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
@@ -36,19 +37,13 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/auth/token/', obtain_auth_token, name='api_token_auth'),
     path('api/v1/', include('cards.urls')),
-    
-    # Swagger URLs
-    path(
-        'api/docs/',
-        schema_view.with_ui('swagger', cache_timeout=0),
-        name='schema-swagger-ui',
-    ),
-    path(
-        'api/redoc/',
-        schema_view.with_ui('redoc', cache_timeout=0),
-        name='schema-redoc',
-    ),
-    path('api/schema/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('api/v1/auth/', include('djoser.urls')),
+    path('api/v1/auth/', include('djoser.urls.jwt')),
+    path('api/v1/auth/social/', include('djoser.social.urls')),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
