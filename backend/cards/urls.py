@@ -34,9 +34,9 @@ router.register(
     basename='userbadge',
 )
 router.register(
-    r'settings', 
-    SettingsViewSet, 
-    basename='settings'
+    r'settings',
+    SettingsViewSet,
+    basename='user-settings',
 )
 
 urlpatterns = [

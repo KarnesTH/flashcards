@@ -58,24 +58,11 @@ export interface LoginFormData {
 
 // Settings Form Data
 export interface SettingsFormData {
-    email: string;
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-    privacySettings: {
-        showStats: boolean;
-        showDecks: boolean;
-        showProgress: boolean;
-    };
-    notifications: {
-        emailNotifications: boolean;
-        learningReminders: boolean;
-        achievementAlerts: boolean;
-    };
-    appearance: {
-        theme: 'light' | 'dark' | 'system';
-        fontSize: 'small' | 'medium' | 'large';
-    };
+    user: User;
+    theme: Theme;
+    fontSize: FontSize;
+    privacySettings: PrivacySettings;
+    notificationSettings: NotificationSettings;
 }
 
 /* Settings Types */
@@ -85,6 +72,7 @@ export type PrivacySettings = 'show_stats' | 'show_decks' | 'show_progress';
 export type NotificationSettings = 'email_notifications' | 'learning_reminders' | 'achievement_alerts';
 
 export interface UserSettings {
+    user: User;
     theme: Theme;
     fontSize: FontSize;
     privacySettings: PrivacySettings;

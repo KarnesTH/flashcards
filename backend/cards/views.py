@@ -4,8 +4,9 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.http import Http404
 
-from .models import Badge, Card, CardReview, Deck, LearningSession, Tag, UserBadge
+from .models import Badge, Card, CardReview, Deck, LearningSession, Settings, Tag, UserBadge
 from .serializers import (
     BadgeSerializer,
     CardReviewSerializer,
@@ -182,11 +183,30 @@ class SettingsViewSet(viewsets.ModelViewSet):
     """
     serializer_class = SettingsSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = [
-        'theme', 
-        'font_size', 
-        'privacy_settings', 
-        'notification_settings'
-    ]
-    ordering_fields = ['created_at', 'updated_at']
+    lookup_field = 'user__username'
+    lookup_url_kwarg = 'username'
+
+    def get_queryset(self):
+        return Settings.objects.filter(user=self.request.user)
+
+    def get_object(self):
+        try:
+            return super().get_object()
+        except Http404:
+            settings = Settings.objects.create(user=self.request.user)
+            return settings
+
+    def perform_create(self, serializer):
+        if serializer.validated_data['user'] != self.request.user:
+            raise permissions.PermissionDenied(
+                "You are not the owner of this settings."
+            )
+        serializer.save()
+
+    def perform_update(self, serializer):
+        if serializer.validated_data['user'] != self.request.user:
+            raise permissions.PermissionDenied(
+                "You are not the owner of this settings."
+            )
+        serializer.save()
+    
