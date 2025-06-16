@@ -1,7 +1,16 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Badge, Card, CardReview, Deck, LearningSession, Tag, UserBadge
+from .models import (
+    Badge,
+    Card,
+    CardReview,
+    Deck,
+    LearningSession,
+    Settings,
+    Tag,
+    UserBadge,
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -148,3 +157,21 @@ class UserBadgeSerializer(serializers.ModelSerializer):
         model = UserBadge
         fields = ('id', 'user', 'badge', 'created_at')
         read_only_fields = ('created_at',)
+
+class SettingsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Settings-Model
+    """
+    class Meta:
+        model = Settings
+        fields = (
+            'id', 
+            'user', 
+            'theme', 
+            'font_size', 
+            'privacy_settings', 
+            'notification_settings', 
+            'created_at', 
+            'updated_at'
+        )
+        read_only_fields = ('created_at', 'updated_at')

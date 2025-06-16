@@ -7,6 +7,7 @@ from .views import (
     CardViewSet,
     DeckViewSet,
     LearningSessionViewSet,
+    SettingsViewSet,
     TagViewSet,
     UserBadgeViewSet,
     UserView,
@@ -31,6 +32,11 @@ router.register(
     r'user-badges',
     UserBadgeViewSet,
     basename='userbadge',
+)
+router.register(
+    r'settings', 
+    SettingsViewSet, 
+    basename='settings'
 )
 
 urlpatterns = [

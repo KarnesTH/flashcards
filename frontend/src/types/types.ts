@@ -5,6 +5,7 @@ export interface User {
     id: number;
     username: string;
     email: string;
+    settings?: UserSettings;
 }
 
 // Deck Types
@@ -75,4 +76,17 @@ export interface SettingsFormData {
         theme: 'light' | 'dark' | 'system';
         fontSize: 'small' | 'medium' | 'large';
     };
+}
+
+/* Settings Types */
+export type Theme = 'light' | 'dark' | 'system';
+export type FontSize = 'small' | 'medium' | 'large';
+export type PrivacySettings = 'show_stats' | 'show_decks' | 'show_progress';
+export type NotificationSettings = 'email_notifications' | 'learning_reminders' | 'achievement_alerts';
+
+export interface UserSettings {
+    theme: Theme;
+    fontSize: FontSize;
+    privacySettings: PrivacySettings;
+    notificationSettings: NotificationSettings;
 }

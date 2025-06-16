@@ -1,4 +1,4 @@
-import type { SettingsFormData, User } from "../types/types";
+import type { SettingsFormData, User, UserSettings } from "../types/types";
 
 const API_URL = 'http://localhost:8000/api/v1';
 
@@ -131,45 +131,6 @@ export const api = {
         return response.json();
     },
 
-    async getUserSettings() {
-        const token = localStorage.getItem('token');
-        if (!token) throw new ApiError(401, 'Nicht authentifiziert');
-
-        const response = await this.fetchWithAuth(`${API_URL}/user/settings/`);
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                throw new ApiError(401, 'Sitzung abgelaufen');
-            }
-            const error = await response.json().catch(() => ({}));
-            throw new ApiError(response.status, error.detail || 'Fehler beim Abrufen der Einstellungen');
-        }
-
-        return response.json();
-    },
-
-    async updateUserSettings(settings: Partial<SettingsFormData>) {
-        const token = localStorage.getItem('token');
-        if (!token) throw new ApiError(401, 'Nicht authentifiziert');
-
-        const response = await this.fetchWithAuth(`${API_URL}/user/settings/`, {
-            method: 'PUT',
-            body: JSON.stringify(settings),
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                throw new ApiError(401, 'Sitzung abgelaufen');
-            }
-            const error = await response.json().catch(() => ({}));
-            throw new ApiError(response.status, error.detail || 'Fehler beim Aktualisieren der Einstellungen');
-        }
-
-        return response.json();
-    },
-
     async getPublicProfile(username: string) {
         const token = localStorage.getItem('token');
         if (!token) throw new ApiError(401, 'Nicht authentifiziert');
@@ -189,6 +150,48 @@ export const api = {
             throw new ApiError(response.status, error.detail || 'Fehler beim Abrufen des öffentlichen Profils');
         }
 
+        return response.json();
+    },
+
+    async getUserSettings(username: string): Promise<UserSettings> {
+        const token = localStorage.getItem('token');
+        if (!token) throw new ApiError(401, 'Nicht authentifiziert');
+
+        const response = await fetch(`${API_URL}/users/${username}/settings/`, {
+            headers: {
+                'Authorization': `Token ${token}`,
+            },
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                throw new ApiError(401, 'Sitzung abgelaufen');
+            }
+            const error = await response.json().catch(() => ({}));
+            throw new ApiError(response.status, error.detail || 'Fehler beim Abrufen der Einstellungen');
+        }
+        return response.json();
+    },
+
+    async updateUserSettings(username: string, settings: UserSettings): Promise<UserSettings> {
+        const token = localStorage.getItem('token');
+        if (!token) throw new ApiError(401, 'Nicht authentifiziert');
+
+        const response = await fetch(`${API_URL}/users/${username}/settings/`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Token ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                throw new ApiError(401, 'Sitzung abgelaufen');
+            }
+            const error = await response.json().catch(() => ({}));
+            throw new ApiError(response.status, error.detail || 'Fehler beim Aktualisieren der Einstellungen');
+        }
         return response.json();
     },
 }; 

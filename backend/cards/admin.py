@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import Badge, Card, CardReview, Deck, LearningSession, Tag, UserBadge
+from .models import (
+    Badge,
+    Card,
+    CardReview,
+    Deck,
+    LearningSession,
+    Settings,
+    Tag,
+    UserBadge,
+)
 
 
 @admin.register(Tag)
@@ -91,3 +100,21 @@ class UserBadgeAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'badge__name')
     raw_id_fields = ('user', 'badge')
     ordering = ('-created_at',)
+
+@admin.register(Settings)
+class SettingsAdmin(admin.ModelAdmin):
+    """
+    Admin for Settings-Model
+    This model is used to store the settings of a user.
+    """
+    list_display = (
+        'user', 
+        'theme', 
+        'font_size', 
+        'privacy_settings', 
+        'notification_settings', 
+        'created_at', 
+        'updated_at'
+    )
+    raw_id_fields = ('user',)
+    ordering = ('-updated_at',)

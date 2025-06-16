@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from .models import Card, Deck, LearningSession, Tag
+from .models import Card, Deck, LearningSession, Settings, Tag
 
 
 class ModelTests(TestCase):
@@ -63,6 +63,23 @@ class ModelTests(TestCase):
         self.assertEqual(session.user, self.user)
         self.assertEqual(session.deck, self.deck)
         self.assertIsNone(session.ended_at)
+
+    def test_settings_creation(self):
+        """
+        Test Settings-Creation and Relationships
+        """
+        settings = Settings.objects.create(user=self.user)
+        self.assertEqual(settings.user, self.user)
+        self.assertEqual(settings.theme, Settings.Theme.SYSTEM)
+        self.assertEqual(settings.font_size, Settings.FontSize.MEDIUM)
+        self.assertEqual(
+            settings.privacy_settings, 
+            Settings.PrivacySettings.SHOW_STATS
+        )
+        self.assertEqual(
+            settings.notification_settings, 
+            Settings.NotificationSettings.EMAIL_NOTIFICATIONS
+        )
 
 class APITests(APITestCase):
     """

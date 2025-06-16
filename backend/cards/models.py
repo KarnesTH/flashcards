@@ -171,3 +171,75 @@ class UserBadge(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.badge.name}"
+    
+class Settings(models.Model):
+    """
+    Settings for a user
+    """
+    class Theme(models.TextChoices):
+        """
+        Theme for the user
+        """
+        LIGHT = 'light', _('Hell')
+        DARK = 'dark', _('Dunkel')
+        SYSTEM = 'system', _('System')
+    
+    class FontSize(models.TextChoices):
+        """
+        Font size for the user
+        """
+        SMALL = 'small', _('Klein')
+        MEDIUM = 'medium', _('Mittel')
+        LARGE = 'large', _('Groß')
+    
+    class PrivacySettings(models.TextChoices):
+        """
+        Privacy settings for the user
+        """
+        SHOW_STATS = 'show_stats', _('Stats anzeigen')
+        SHOW_DECKS = 'show_decks', _('Decks anzeigen')
+        SHOW_PROGRESS = 'show_progress', _('Fortschritt anzeigen')
+    
+    class NotificationSettings(models.TextChoices):
+        """
+        Notification settings for the user
+        """
+        EMAIL_NOTIFICATIONS = 'email_notifications', _('E-Mail-Benachrichtigungen')
+        LEARNING_REMINDERS = 'learning_reminders', _('Lern-Erinnerungen')
+        ACHIEVEMENT_ALERTS = 'achievement_alerts', _('Erfolgsbenachrichtigungen')
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='settings',
+    )
+    theme = models.CharField(
+        max_length=255,
+        choices=Theme.choices,
+        default=Theme.SYSTEM
+    )
+    font_size = models.CharField(
+        max_length=255,
+        choices=FontSize.choices,
+        default=FontSize.MEDIUM
+    )
+    privacy_settings = models.CharField(
+        max_length=255,
+        choices=PrivacySettings.choices,
+        default=PrivacySettings.SHOW_STATS
+    )
+    notification_settings = models.CharField(
+        max_length=255,
+        choices=NotificationSettings.choices,
+        default=NotificationSettings.EMAIL_NOTIFICATIONS
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.theme} - {self.font_size}"
+
+    class Meta:
+        verbose_name = _('Einstellungen')
+        verbose_name_plural = _('Einstellungen')
+        ordering = ['-updated_at']

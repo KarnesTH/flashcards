@@ -13,6 +13,7 @@ from .serializers import (
     DeckDetailSerializer,
     DeckSerializer,
     LearningSessionSerializer,
+    SettingsSerializer,
     TagSerializer,
     UserBadgeSerializer,
     UserSerializer,
@@ -174,3 +175,18 @@ class UserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+    
+class SettingsViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Settings-Models
+    """
+    serializer_class = SettingsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = [
+        'theme', 
+        'font_size', 
+        'privacy_settings', 
+        'notification_settings'
+    ]
+    ordering_fields = ['created_at', 'updated_at']
