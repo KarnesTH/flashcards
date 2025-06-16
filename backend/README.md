@@ -59,6 +59,10 @@ A Django REST Framework backend for a flashcards application. The API enables cr
 - `GET /api/v1/badges/` - List all available badges
 - `GET /api/v1/user-badges/` - List user's earned badges
 
+### Settings
+- `GET /api/v1/settings/{username}` - List all user settings
+- `PUT /api/v1/settings/{username}` - Update settings
+
 ## 🔍 API Features
 
 ### Filtering & Search
