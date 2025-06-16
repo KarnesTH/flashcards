@@ -132,25 +132,7 @@ export const api = {
     },
 
     async getPublicProfile(username: string) {
-        const token = localStorage.getItem('token');
-        if (!token) throw new ApiError(401, 'Nicht authentifiziert');
-
-        const response = await fetch(`${API_URL}/users/${username}/`, {
-            headers: {
-                'Authorization': `Token ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                throw new ApiError(401, 'Sitzung abgelaufen');
-            }
-            const error = await response.json().catch(() => ({}));
-            throw new ApiError(response.status, error.detail || 'Fehler beim Abrufen des öffentlichen Profils');
-        }
-
-        return response.json();
+        return this.fetchWithAuth(`${API_URL}/user/${username}/`);
     },
 
     async getUserSettings(username: string): Promise<UserSettings> {
