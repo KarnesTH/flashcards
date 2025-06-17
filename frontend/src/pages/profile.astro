@@ -16,6 +16,15 @@ import Layout from '../layouts/Layout.astro';
                             Verwalte deine persönlichen Informationen und Statistiken
                         </p>
                     </div>
+                    <div class="flex gap-2">
+                        <a 
+                            href="/settings"
+                            aria-label="Einstellungen"
+                            class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
+                        >
+                            Einstellungen
+                        </a>
+                    </div>
                 </div>
 
                 <ProfileInfo client:load />

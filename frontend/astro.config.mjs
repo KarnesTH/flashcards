@@ -8,6 +8,14 @@ import react from '@astrojs/react';
 export default defineConfig({
   vite: {
       plugins: [tailwindcss()],
+      server: {
+          proxy: {
+              '/media': {
+                  target: 'http://localhost:8000',
+                  changeOrigin: true,
+              },
+          },
+      },
   },
 
   integrations: [react()],

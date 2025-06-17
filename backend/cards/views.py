@@ -1,8 +1,11 @@
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
+import os
+from django.conf import settings
 
 from .models import Card, CardReview, Deck, LearningSession, User
 from .serializers import (
@@ -32,6 +35,80 @@ class IsDeckOwnerOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj.deck.owner == request.user
+
+class AvatarViewSet(APIView):
+    """
+    Avatar upload and delete operations
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        """
+        Upload avatar for current user
+        """
+        if 'avatar' not in request.FILES:
+            return Response({'error': 'Kein Avatar-Bild gefunden'}, status=400)
+        
+        avatar_file = request.FILES['avatar']
+        
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+        if avatar_file.content_type not in allowed_types:
+            return Response({
+                'error': 'Nur JPEG, PNG und GIF Dateien sind erlaubt'
+            }, status=400)
+        
+        if avatar_file.size > 5 * 1024 * 1024:
+            return Response({
+                'error': 'Datei ist zu groß. Maximum 5MB erlaubt.'
+            }, status=400)
+        
+        try:
+            user = request.user
+            
+            avatar_dir = os.path.join(settings.MEDIA_ROOT, 'avatars', user.username)
+            os.makedirs(avatar_dir, exist_ok=True)
+            
+            if user.avatar:
+                user.avatar.delete(save=False)
+            
+            user.avatar = avatar_file
+            user.save()
+            
+            return Response({
+                'message': 'Avatar erfolgreich hochgeladen',
+                'avatar_url': user.avatar_url
+            })
+        except Exception as e:
+            return Response({
+                'error': f'Fehler beim Hochladen: {str(e)}'
+            }, status=500)
+
+    def delete(self, request):
+        """
+        Delete avatar for current user
+        """
+        try:
+            user = request.user
+            if user.avatar:
+                user.avatar.delete(save=False)
+                user.avatar = None
+                user.save()
+                
+                avatar_dir = os.path.join(settings.MEDIA_ROOT, 'avatars', user.username)
+                if os.path.exists(avatar_dir) and not os.listdir(avatar_dir):
+                    os.rmdir(avatar_dir)
+                
+                return Response({
+                    'message': 'Avatar erfolgreich gelöscht'
+                })
+            else:
+                return Response({
+                    'error': 'Kein Avatar vorhanden'
+                }, status=404)
+        except Exception as e:
+            return Response({
+                'error': f'Fehler beim Löschen: {str(e)}'
+            }, status=500)
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """

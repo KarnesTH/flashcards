@@ -26,17 +26,19 @@ class UserSerializer(serializers.ModelSerializer):
     total_cards_reviewed = serializers.ReadOnlyField()
     total_correct_answers = serializers.ReadOnlyField()
     learning_accuracy = serializers.ReadOnlyField()
+    avatar_url = serializers.ReadOnlyField()
     
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 
-            'bio', 'last_active', 'total_cards_created', 'total_decks_created',
+            'bio', 'last_active', 'is_public', 'avatar', 'avatar_url',
+            'total_cards_created', 'total_decks_created',
             'total_learning_sessions', 'total_cards_reviewed', 'total_correct_answers',
             'learning_accuracy'
         ]
         read_only_fields = [
-            'id', 'last_active', 'total_cards_created', 'total_decks_created',
+            'id', 'last_active', 'avatar_url', 'total_cards_created', 'total_decks_created',
             'total_learning_sessions', 'total_cards_reviewed', 'total_correct_answers',
             'learning_accuracy'
         ]

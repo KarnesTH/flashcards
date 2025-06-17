@@ -21,6 +21,7 @@ from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from cards.views import AvatarViewSet
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -41,6 +42,7 @@ urlpatterns = [
     path('api/v1/auth/', include('djoser.urls')),
     path('api/v1/auth/', include('djoser.urls.jwt')),
     path('api/v1/auth/social/', include('djoser.social.urls')),
+    path('api/v1/auth/users/me/avatar/', AvatarViewSet.as_view(), name='avatar'),
     path(
         'swagger/',
         schema_view.with_ui('swagger', cache_timeout=0),

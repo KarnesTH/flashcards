@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
-import type { SettingsFormData, User } from '../../types/types';
-
+import type { User } from '../../types/types';
 
 const SettingsForm = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -9,17 +8,6 @@ const SettingsForm = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const [formData, setFormData] = useState<SettingsFormData>({
-        user: {
-            id: 0,
-            username: '',
-            email: '',
-        },
-        theme: 'light',
-        fontSize: 'small',
-        privacySettings: 'show_stats',
-        notificationSettings: 'email_notifications',
-    });
 
     useEffect(() => {
         checkUserSettings();
@@ -29,31 +17,22 @@ const SettingsForm = () => {
         try {
             const userData = await api.getCurrentUser();
             setUser(userData);
-            const settings = await api.getUserSettings(userData?.username);
-            setFormData({
-                user: settings.user,
-                theme: settings.theme,
-                fontSize: settings.fontSize,
-                privacySettings: settings.privacySettings,
-                notificationSettings: settings.notificationSettings,
-            });
-            setIsLoading(false);
         } catch (error) {
-            console.error('Fehler beim Abrufen der Einstellungen:', error);
+            console.error('Fehler beim Abrufen der Benutzerdaten:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleSave = async () => {
-        if (!user?.username) return;
+        if (!user) return;
         
         setIsSaving(true);
         setError(null);
         setSuccess(null);
         
         try {
-            await api.updateUserSettings(user.username, formData);
+            await api.updateUser(user);
             setSuccess('Einstellungen erfolgreich gespeichert');
         } catch (error) {
             console.error('Fehler beim Speichern der Einstellungen:', error);
@@ -94,9 +73,22 @@ const SettingsForm = () => {
                         <input
                             type="email"
                             id="email"
-                            value={user?.email}
-                            onChange={(e) => setFormData({ ...formData, user: { ...formData.user, email: e.target.value } })}
+                            value={user?.email || ''}
+                            onChange={(e) => setUser(user ? { ...user, email: e.target.value } : null)}
                             className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="bio" className="block text-sm font-medium text-foreground">
+                            Bio
+                        </label>
+                        <textarea
+                            id="bio"
+                            value={user?.bio || ''}
+                            onChange={(e) => setUser(user ? { ...user, bio: e.target.value } : null)}
+                            rows={3}
+                            className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                            placeholder="Kurze Beschreibung über dich..."
                         />
                     </div>
                 </div>
@@ -107,159 +99,36 @@ const SettingsForm = () => {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h3 className="text-sm font-medium text-foreground">Statistiken anzeigen</h3>
-                            <p className="text-sm text-foreground/60">Deine Lernstatistiken sind öffentlich sichtbar</p>
+                            <h3 className="text-sm font-medium text-foreground">Profil öffentlich machen</h3>
+                            <p className="text-sm text-foreground/60">
+                                {user?.is_public 
+                                    ? 'Dein Profil ist öffentlich sichtbar' 
+                                    : 'Dein Profil ist nur für dich sichtbar'
+                                }
+                            </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
-                                checked={formData.privacySettings === 'show_stats'}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    privacySettings: e.target.checked ? 'show_stats' : 'show_decks'
-                                })}
+                                checked={user?.is_public || false}
+                                onChange={async (e) => {
+                                    if (!user) return;
+                                    try {
+                                        const updatedUser = await api.updateUser({
+                                            ...user,
+                                            is_public: e.target.checked
+                                        });
+                                        setUser(updatedUser);
+                                        setSuccess('Profil-Sichtbarkeit aktualisiert');
+                                    } catch (error) {
+                                        console.error('Fehler beim Aktualisieren der Profilsichtbarkeit:', error);
+                                        setError('Fehler beim Aktualisieren der Profilsichtbarkeit');
+                                    }
+                                }}
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-background border border-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500/20"></div>
                         </label>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-medium text-foreground">Decks anzeigen</h3>
-                            <p className="text-sm text-foreground/60">Deine erstellten Decks sind öffentlich sichtbar</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={formData.privacySettings === 'show_decks'}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    privacySettings: e.target.checked ? 'show_decks' : 'show_progress'
-                                })}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-background border border-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500/20"></div>
-                        </label>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-medium text-foreground">Fortschritt anzeigen</h3>
-                            <p className="text-sm text-foreground/60">Dein Lernfortschritt ist öffentlich sichtbar</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={formData.privacySettings === 'show_progress'}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    privacySettings: e.target.checked ? 'show_progress' : 'show_stats'
-                                })}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-background border border-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500/20"></div>
-                        </label>
-                    </div>
-                </div>
-            </section>
-
-            <section id="notifications" className="space-y-6">
-                <h2 className="text-xl font-semibold text-foreground">Benachrichtigungen</h2>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-medium text-foreground">E-Mail-Benachrichtigungen</h3>
-                            <p className="text-sm text-foreground/60">Erhalte wichtige Updates per E-Mail</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={formData.notificationSettings === 'email_notifications'}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    notificationSettings: e.target.checked ? 'email_notifications' : 'learning_reminders'
-                                })}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-background border border-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500/20"></div>
-                        </label>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-medium text-foreground">Lern-Erinnerungen</h3>
-                            <p className="text-sm text-foreground/60">Erinnere mich an regelmäßiges Lernen</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={formData.notificationSettings === 'learning_reminders'}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    notificationSettings: e.target.checked ? 'learning_reminders' : 'achievement_alerts'
-                                })}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-background border border-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500/20"></div>
-                        </label>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-medium text-foreground">Erfolgs-Benachrichtigungen</h3>
-                            <p className="text-sm text-foreground/60">Benachrichtige mich über neue Erfolge</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={formData.notificationSettings === 'achievement_alerts'}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    notificationSettings: e.target.checked ? 'achievement_alerts' : 'email_notifications'
-                                })}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-background border border-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500/20"></div>
-                        </label>
-                    </div>
-                </div>
-            </section>
-
-            <section id="appearance" className="space-y-6">
-                <h2 className="text-xl font-semibold text-foreground">Erscheinungsbild</h2>
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="theme" className="block text-sm font-medium text-foreground">
-                            Theme
-                        </label>
-                        <select
-                            id="theme"
-                            value={formData.theme}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                theme: e.target.value as 'light' | 'dark' | 'system'
-                            })}
-                            className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        >
-                            <option value="light">Hell</option>
-                            <option value="dark">Dunkel</option>
-                            <option value="system">System</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="fontSize" className="block text-sm font-medium text-foreground">
-                            Schriftgröße
-                        </label>
-                        <select
-                            id="fontSize"
-                            value={formData.fontSize}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                fontSize: e.target.value as 'small' | 'medium' | 'large'
-                            })}
-                            className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        >
-                            <option value="small">Klein</option>
-                            <option value="medium">Mittel</option>
-                            <option value="large">Groß</option>
-                        </select>
                     </div>
                 </div>
             </section>

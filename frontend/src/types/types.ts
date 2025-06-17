@@ -7,6 +7,9 @@ export interface User {
     last_name?: string;
     bio?: string;
     last_active?: string;
+    is_public: boolean;
+    avatar?: string;
+    avatar_url: string;
     total_cards_created: number;
     total_decks_created: number;
     total_learning_sessions: number;

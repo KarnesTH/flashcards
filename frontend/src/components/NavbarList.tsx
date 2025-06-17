@@ -71,16 +71,11 @@ const NavbarList = () => {
                         {/* Wichtige Navigationslinks */}
                         <nav className="flex items-center gap-6">
                             <a 
-                                href="/dashboard" 
+                                href="/dashboard"
+                                aria-label="Dashboard"
                                 className="text-foreground hover:text-primary-500 transition-colors"
                             >
                                 Dashboard
-                            </a>
-                            <a 
-                                href="/decks" 
-                                className="text-foreground hover:text-primary-500 transition-colors"
-                            >
-                                Meine Decks
                             </a>
                         </nav>
 
@@ -106,12 +101,14 @@ const NavbarList = () => {
                                 <div className="py-1">
                                     <a 
                                         href="/profile" 
+                                        aria-label="Profil"
                                         className="block px-4 py-2 text-foreground hover:bg-primary-100"
                                     >
                                         Profil
                                     </a>
                                     <a 
-                                        href="/settings" 
+                                        href="/settings"
+                                        aria-label="Einstellungen"
                                         className="block px-4 py-2 text-foreground hover:bg-primary-100"
                                     >
                                         Einstellungen
@@ -131,12 +128,14 @@ const NavbarList = () => {
                     <div className="flex items-center gap-4">
                         <a
                             href="/auth/login"
+                            aria-label="Melde dich mit deinem Account an"
                             className="text-foreground hover:text-primary-500 transition-colors"
                         >
                             Anmelden
                         </a>
                         <a
                             href="/auth/register"
+                            aria-label="Erstelle einen neuen Account"
                             className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
                         >
                             Registrieren
@@ -152,25 +151,22 @@ const NavbarList = () => {
                         {user ? (
                             <>
                                 <a 
-                                    href="/dashboard" 
+                                    href="/dashboard"
+                                    aria-label="Dashboard"
                                     className="block py-2 text-foreground hover:text-primary-500"
                                 >
                                     Dashboard
                                 </a>
                                 <a 
-                                    href="/decks" 
-                                    className="block py-2 text-foreground hover:text-primary-500"
-                                >
-                                    Meine Decks
-                                </a>
-                                <a 
-                                    href="/profile" 
+                                    href="/profile"
+                                    aria-label="Profil"
                                     className="block py-2 text-foreground hover:text-primary-500"
                                 >
                                     Profil
                                 </a>
                                 <a 
-                                    href="/settings" 
+                                    href="/settings"
+                                    aria-label="Einstellungen"
                                     className="block py-2 text-foreground hover:text-primary-500"
                                 >
                                     Einstellungen
@@ -186,12 +182,14 @@ const NavbarList = () => {
                             <>
                                 <a
                                     href="/auth/login"
+                                    aria-label="Melde dich mit deinem Account an"
                                     className="block py-2 text-foreground hover:text-primary-500"
                                 >
                                     Anmelden
                                 </a>
                                 <a
                                     href="/auth/register"
+                                    aria-label="Erstelle einen neuen Account"
                                     className="block py-2 text-foreground hover:text-primary-500"
                                 >
                                     Registrieren

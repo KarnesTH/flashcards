@@ -1,6 +1,17 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+import os
+from PIL import Image
+from io import BytesIO
+from django.core.files import File
+
+
+def user_avatar_path(instance, filename):
+    """Generate file path for user avatar"""
+    ext = filename.split('.')[-1]
+    filename = f'avatar.{ext}'
+    return os.path.join('avatars', instance.username, filename)
 
 
 class User(AbstractUser):
@@ -16,6 +27,16 @@ class User(AbstractUser):
         auto_now=True,
         help_text=_('Letzte Aktivität des Benutzers')
     )
+    is_public = models.BooleanField(
+        default=False,
+        help_text=_('Ob das Profil öffentlich sichtbar ist')
+    )
+    avatar = models.ImageField(
+        upload_to=user_avatar_path,
+        blank=True,
+        null=True,
+        help_text=_('Profilbild des Benutzers')
+    )
 
     class Meta:
         verbose_name = _('Benutzer')
@@ -27,6 +48,43 @@ class User(AbstractUser):
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip() or self.username
+
+    def save(self, *args, **kwargs):
+        # Resize avatar if it exists and is being saved
+        if self.avatar:
+            self.resize_avatar()
+        super().save(*args, **kwargs)
+
+    def resize_avatar(self):
+        """Resize avatar to 300x300 pixels"""
+        if self.avatar:
+            img = Image.open(self.avatar)
+            
+            # Convert to RGB if necessary
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Resize image
+            img.thumbnail((300, 300), Image.Resampling.LANCZOS)
+            
+            # Save the resized image
+            output = BytesIO()
+            img.save(output, format='JPEG', quality=85, optimize=True)
+            output.seek(0)
+            
+            # Update the avatar field
+            self.avatar.save(
+                os.path.basename(self.avatar.name),
+                File(output),
+                save=False
+            )
+
+    @property
+    def avatar_url(self):
+        """Get avatar URL or default avatar"""
+        if self.avatar:
+            return self.avatar.url
+        return f"https://api.dicebear.com/7.x/initials/svg?seed={self.username}"
 
     @property
     def total_cards_created(self):

@@ -117,6 +117,45 @@ class Api {
         return this.request('/auth/users/me/');
     }
 
+    async updateUser(data: Partial<User>): Promise<User> {
+        return this.request('/auth/users/me/', {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async uploadAvatar(file: File): Promise<{ message: string; avatar_url: string }> {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        const url = `${API_BASE_URL}/auth/users/me/avatar/`;
+        const token = localStorage.getItem('access_token');
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new ApiError(
+                errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
+        
+        return response.json();
+    }
+
+    async deleteAvatar(): Promise<{ message: string }> {
+        return this.request('/auth/users/me/avatar/', {
+            method: 'DELETE',
+        });
+    }
+
     async getDecks(): Promise<Deck[]> {
         const response = await this.request<{ results: Deck[] }>('/decks/');
         return response.results || response;
