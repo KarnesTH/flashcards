@@ -67,9 +67,16 @@ const DashboardContent = () => {
         setIsModalOpen(true);
     };
 
-    const openEditModal = (deck: Deck) => {
-        setEditingDeck(deck);
-        setIsModalOpen(true);
+    const openEditModal = async (deck: Deck) => {
+        try {
+            const deckWithCards = await api.getDeckWithCards(deck.id);
+            setEditingDeck(deckWithCards);
+            setIsModalOpen(true);
+        } catch (error) {
+            console.error('Fehler beim Laden der Deck-Daten:', error);
+            setEditingDeck(deck);
+            setIsModalOpen(true);
+        }
     };
 
     const closeModal = () => {
@@ -104,8 +111,10 @@ const DashboardContent = () => {
             <DashboardStats 
                 cards={user?.total_cards_created || 0} 
                 decks={decks.length} 
-                learnedCards={0} 
-                averageScore={0} 
+                learnedCards={user?.total_cards_reviewed || 0} 
+                averageScore={user?.learning_accuracy || 0} 
+                learningSessions={user?.total_learning_sessions || 0}
+                totalReviews={user?.total_cards_reviewed || 0}
             />
 
             <div className="bg-background rounded-2xl shadow-lg border border-border p-8">

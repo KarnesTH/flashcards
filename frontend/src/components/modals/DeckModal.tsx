@@ -46,19 +46,14 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         setError(null);
 
         try {
-            // Nur Deck-Daten ohne Karten senden
             const deckData = {
                 title: formData.title,
                 description: formData.description,
                 is_public: false
             };
 
-            console.log('Sende Deck-Daten an API:', deckData);
-            console.log('Anzahl Karten:', cards.length);
-
             let savedDeck: Deck;
             if (deck) {
-                console.log('Aktualisiere bestehendes Deck:', deck.id);
                 try {
                     savedDeck = await api.updateDeck(deck.id, deckData);
                 } catch (err) {
@@ -69,15 +64,21 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                     throw err;
                 }
             } else {
-                console.log('Erstelle neues Deck');
                 savedDeck = await api.createDeck(deckData);
             }
 
-            console.log('Antwort von API:', savedDeck);
+            if (deck) {
+                const existingCards = await api.getCards(savedDeck.id);
+                for (const card of existingCards) {
+                    try {
+                        await api.deleteCard(card.id);
+                    } catch (error) {
+                        console.warn('Karte konnte nicht gelöscht werden:', card.id, error);
+                    }
+                }
+            }
 
-            // Karten separat hinzufügen
             if (cards.length > 0) {
-                console.log('Füge Karten hinzu...');
                 for (const card of cards) {
                     if (card.front.trim() && card.back.trim()) {
                         await api.createCard({
@@ -89,9 +90,7 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                 }
             }
 
-            // Aktualisiertes Deck mit Karten laden
             const updatedDeck = await api.getDeck(savedDeck.id);
-            console.log('Aktualisiertes Deck mit Karten:', updatedDeck);
             
             onSave(updatedDeck);
             onClose();

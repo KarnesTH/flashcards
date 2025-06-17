@@ -38,6 +38,29 @@ class User(AbstractUser):
         """Calculate the total number of decks created"""
         return self.decks.count()
 
+    @property
+    def total_learning_sessions(self):
+        """Calculate the total number of completed learning sessions"""
+        return self.learning_sessions.filter(status='completed').count()
+
+    @property
+    def total_cards_reviewed(self):
+        """Calculate the total number of cards reviewed"""
+        return CardReview.objects.filter(session__user=self).count()
+
+    @property
+    def total_correct_answers(self):
+        """Calculate the total number of correct answers"""
+        return CardReview.objects.filter(session__user=self, is_correct=True).count()
+
+    @property
+    def learning_accuracy(self):
+        """Calculate the overall learning accuracy"""
+        total_reviews = self.total_cards_reviewed
+        if total_reviews == 0:
+            return 0
+        return (self.total_correct_answers / total_reviews) * 100
+
 class Deck(models.Model):
     """
     Deck model

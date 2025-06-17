@@ -75,6 +75,7 @@ const LearningSession = () => {
             if (currentCardIndex < deck.cards.length - 1) {
                 setCurrentCardIndex(prev => prev + 1);
             } else {
+                await api.updateLearningSession(session.id, 'completed', new Date().toISOString());
                 setIsCompleted(true);
             }
 
@@ -83,6 +84,11 @@ const LearningSession = () => {
             if (currentCardIndex < (deck?.cards?.length || 0) - 1) {
                 setCurrentCardIndex(prev => prev + 1);
             } else {
+                try {
+                    await api.updateLearningSession(session.id, 'completed', new Date().toISOString());
+                } catch (sessionError) {
+                    console.error('Fehler beim Beenden der Session:', sessionError);
+                }
                 setIsCompleted(true);
             }
         }

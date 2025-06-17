@@ -24,6 +24,15 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
         return obj.owner == request.user
 
+class IsDeckOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Allows only the owner of the deck to edit cards.
+    """
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.deck.owner == request.user
+
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     User-ViewSet (read-only)
@@ -68,7 +77,7 @@ class CardViewSet(viewsets.ModelViewSet):
     Card-ViewSet
     """
     serializer_class = CardSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsDeckOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['deck']
     search_fields = ['front', 'back']
@@ -85,6 +94,13 @@ class CardViewSet(viewsets.ModelViewSet):
                 "Du bist nicht der Besitzer dieses Decks."
             )
         serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.deck.owner != self.request.user:
+            raise permissions.PermissionDenied(
+                "Du bist nicht der Besitzer dieser Karte."
+            )
+        instance.delete()
 
 class LearningSessionViewSet(viewsets.ModelViewSet):
     """

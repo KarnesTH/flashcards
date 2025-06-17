@@ -182,9 +182,20 @@ class Api {
     }
 
     async deleteCard(id: number): Promise<void> {
-        return this.request(`/cards/${id}/`, {
+        const response = await fetch(`${API_BASE_URL}/cards/${id}/`, {
             method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
         });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new ApiError(
+                errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+                response.status
+            );
+        }
     }
 
     async createLearningSession(deckId: number): Promise<any> {

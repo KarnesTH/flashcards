@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { api } from "../../lib/api";
 import type { Card } from "../../types/types";
 
 interface DashboardCardProps {
@@ -27,6 +28,8 @@ const DashboardCard = ({
     onEdit
 }: DashboardCardProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [loadedCards, setLoadedCards] = useState<Card[]>(cards);
+    const [isLoadingCards, setIsLoadingCards] = useState(false);
 
     const formatDate = (dateString: string) => {
         if (!dateString) return 'Unbekannt';
@@ -53,10 +56,25 @@ const DashboardCard = ({
 
     const handleEdit = () => {
         if (onEdit) {
-            onEdit({ id, title, description, cards, is_public });
+            onEdit({ id, title, description, cards: loadedCards, is_public });
         } else {
             window.location.href = `/decks/${id}/edit`;
         }
+    };
+
+    const handleToggle = async () => {
+        if (!isOpen && loadedCards.length === 0) {
+            setIsLoadingCards(true);
+            try {
+                const deckWithCards = await api.getDeckWithCards(id);
+                setLoadedCards(deckWithCards.cards || []);
+            } catch (error) {
+                console.error('Fehler beim Laden der Karten:', error);
+            } finally {
+                setIsLoadingCards(false);
+            }
+        }
+        setIsOpen(!isOpen);
     };
 
     return (
@@ -95,15 +113,16 @@ const DashboardCard = ({
                     
                     {/* Expand/Collapse Button */}
                     <button 
-                        onClick={() => setIsOpen(!isOpen)}
+                        onClick={handleToggle}
                         className="p-2 rounded-lg text-foreground/60 hover:text-foreground hover:bg-primary-500/10 transition-colors"
                         title={isOpen ? 'Einklappen' : 'Aufklappen'}
                     >
                         <svg 
                             xmlns="http://www.w3.org/2000/svg" 
-                            className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+                            className={`h-4 w-4 text-primary-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                             viewBox="0 0 20 20" 
                             fill="currentColor"
+                            stroke="currentColor"
                         >
                             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
@@ -120,10 +139,10 @@ const DashboardCard = ({
                 <span>Bearbeitet: {formatDate(updated_at || '')}</span>
             </div>
 
-            {isOpen && cards && cards.length > 0 && (
+            {isOpen && loadedCards && loadedCards.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-border">
                     <div className="space-y-3">
-                        {cards.map((card) => (
+                        {loadedCards.map((card) => (
                             <div 
                                 key={card.id}
                                 className="bg-background rounded-lg border border-border p-3 hover:border-primary-500/50 transition-colors"
@@ -148,7 +167,15 @@ const DashboardCard = ({
                 </div>
             )}
 
-            {isOpen && (!cards || cards.length === 0) && (
+            {isOpen && isLoadingCards && (
+                <div className="mt-4 pt-4 border-t border-border">
+                    <div className="flex justify-center items-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+                    </div>
+                </div>
+            )}
+
+            {isOpen && !isLoadingCards && (!loadedCards || loadedCards.length === 0) && (
                 <div className="mt-4 pt-4 border-t border-border">
                     <p className="text-foreground/60 text-sm text-center py-4">
                         Noch keine Karten in diesem Deck

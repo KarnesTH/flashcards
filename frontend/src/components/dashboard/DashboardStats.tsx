@@ -3,9 +3,18 @@ interface DashboardStatsProps {
     decks: number;
     learnedCards: number;
     averageScore: number;
+    learningSessions?: number;
+    totalReviews?: number;
 }
 
-const DashboardStats = ({ cards, decks, learnedCards, averageScore }: DashboardStatsProps) => {
+const DashboardStats = ({ 
+    cards, 
+    decks, 
+    learnedCards, 
+    averageScore, 
+    learningSessions = 0,
+    totalReviews = 0
+}: DashboardStatsProps) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-background rounded-2xl shadow-lg border border-border p-6">
@@ -21,15 +30,15 @@ const DashboardStats = ({ cards, decks, learnedCards, averageScore }: DashboardS
                 </p>
             </div>
             <div className="bg-background rounded-2xl shadow-lg border border-border p-6">
-                <h3 className="text-sm font-medium text-foreground/60">Gelernte Karten</h3>
+                <h3 className="text-sm font-medium text-foreground/60">Lern-Sessions</h3>
                 <p className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                    {learnedCards}
+                    {learningSessions}
                 </p>
             </div>
             <div className="bg-background rounded-2xl shadow-lg border border-border p-6">
-                <h3 className="text-sm font-medium text-foreground/60">Durchschnitt</h3>
+                <h3 className="text-sm font-medium text-foreground/60">Genauigkeit</h3>
                 <p className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
-                    {averageScore}%
+                    {Math.round(averageScore)}%
                 </p>
             </div>
         </div>

@@ -9,6 +9,10 @@ export interface User {
     last_active?: string;
     total_cards_created: number;
     total_decks_created: number;
+    total_learning_sessions: number;
+    total_cards_reviewed: number;
+    total_correct_answers: number;
+    learning_accuracy: number;
 }
 
 // Deck Types
