@@ -4,8 +4,13 @@
 export interface User {
     id: number;
     username: string;
+    firstName?: string;
+    lastName?: string;
     email: string;
     settings?: UserSettings;
+    avatar?: string;
+    bio?: string;
+    stats?: Stats;
 }
 
 // Deck Types
@@ -13,8 +18,11 @@ export interface Deck {
     id: number;
     title: string;
     description: string;
-    createdAt: string;
-    updatedAt: string;
+    createdAt?: string;  // Frontend-Feldname
+    updatedAt?: string;  // Frontend-Feldname
+    created_at?: string; // Backend-Feldname
+    updated_at?: string; // Backend-Feldname
+    is_public?: boolean;
     tags: Tag[];
     cards: Card[];
 }
@@ -28,10 +36,11 @@ export interface Card {
 
 // Stats Types
 export interface Stats {
-    totalCards: number;
-    decksCreated: number;
-    cardsLearned: number;
-    averageScore: number;
+    totalCardsCreated: number;
+    totalCardsReviewed: number;
+    totalLearningSessions: number;
+    averageAccuracy: number;
+    lastActive: string;
 }
 
 // Tag Types
