@@ -11,8 +11,8 @@
   --color-accent-500: oklch(0.75 0.11 170);        /* Türkis/Mint für CTA */
   --color-accent-100: oklch(0.92 0.05 170);        /* Sanftes Mint */
 
-  --color-success-500: oklch(0.75 0.12 140);       /* Grün für „Richtig“ */
-  --color-danger-500: oklch(0.68 0.14 25);         /* Rötlich für „Falsch“ */
+  --color-success-500: oklch(0.75 0.12 140);       /* Grün für „Richtig" */
+  --color-danger-500: oklch(0.68 0.14 25);         /* Rötlich für „Falsch" */
   --color-warning-500: oklch(0.80 0.12 85);        /* Gelb für Hinweis */
 
   --color-muted: oklch(0.85 0.01 240);             /* Inaktive Bereiche */
@@ -24,4 +24,17 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+/* 3D Transformations für Card Flip */
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
 }

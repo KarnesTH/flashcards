@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
-import type { Deck, Card, Tag } from '../../types/types';
+import type { Deck, Card } from '../../types/types';
 
 interface DeckModalProps {
     isOpen: boolean;
@@ -12,33 +12,28 @@ interface DeckModalProps {
 interface DeckFormData {
     title: string;
     description: string;
-    tags: string[];
 }
 
 const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
     const [formData, setFormData] = useState<DeckFormData>({
         title: '',
-        description: '',
-        tags: []
+        description: ''
     });
     const [cards, setCards] = useState<Card[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [newTag, setNewTag] = useState('');
 
     useEffect(() => {
         if (deck) {
             setFormData({
                 title: deck.title,
-                description: deck.description,
-                tags: deck.tags.map(tag => tag.name)
+                description: deck.description
             });
-            setCards(deck.cards);
+            setCards(deck.cards || []);
         } else {
             setFormData({
                 title: '',
-                description: '',
-                tags: []
+                description: ''
             });
             setCards([]);
         }
@@ -51,11 +46,11 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         setError(null);
 
         try {
-            const deckData: Partial<Deck> = {
+            // Nur Deck-Daten ohne Karten senden
+            const deckData = {
                 title: formData.title,
                 description: formData.description,
-                tags: formData.tags.map((name, index) => ({ id: index + 1, name })),
-                cards: cards
+                is_public: false
             };
 
             console.log('Sende Deck-Daten an API:', deckData);
@@ -64,14 +59,41 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
             let savedDeck: Deck;
             if (deck) {
                 console.log('Aktualisiere bestehendes Deck:', deck.id);
-                savedDeck = await api.updateDeck({ ...deck, ...deckData } as Deck);
+                try {
+                    savedDeck = await api.updateDeck(deck.id, deckData);
+                } catch (err) {
+                    if (err instanceof Error && err.message.includes('404')) {
+                        setError('Das Deck wurde nicht gefunden. Es wurde möglicherweise gelöscht.');
+                        return;
+                    }
+                    throw err;
+                }
             } else {
                 console.log('Erstelle neues Deck');
-                savedDeck = await api.createDeck(deckData as Deck);
+                savedDeck = await api.createDeck(deckData);
             }
 
             console.log('Antwort von API:', savedDeck);
-            onSave(savedDeck);
+
+            // Karten separat hinzufügen
+            if (cards.length > 0) {
+                console.log('Füge Karten hinzu...');
+                for (const card of cards) {
+                    if (card.front.trim() && card.back.trim()) {
+                        await api.createCard({
+                            deck: savedDeck.id,
+                            front: card.front,
+                            back: card.back
+                        });
+                    }
+                }
+            }
+
+            // Aktualisiertes Deck mit Karten laden
+            const updatedDeck = await api.getDeck(savedDeck.id);
+            console.log('Aktualisiertes Deck mit Karten:', updatedDeck);
+            
+            onSave(updatedDeck);
             onClose();
         } catch (err) {
             console.error('Fehler beim Speichern des Decks:', err);
@@ -85,7 +107,9 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         const newCard: Card = {
             id: Date.now(),
             front: '',
-            back: ''
+            back: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
         };
         setCards([...cards, newCard]);
     };
@@ -98,23 +122,6 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
 
     const removeCard = (index: number) => {
         setCards(cards.filter((_, i) => i !== index));
-    };
-
-    const addTag = () => {
-        if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-            setFormData({
-                ...formData,
-                tags: [...formData.tags, newTag.trim()]
-            });
-            setNewTag('');
-        }
-    };
-
-    const removeTag = (tagToRemove: string) => {
-        setFormData({
-            ...formData,
-            tags: formData.tags.filter(tag => tag !== tagToRemove)
-        });
     };
 
     if (!isOpen) return null;
@@ -169,47 +176,6 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                                     rows={3}
                                     className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 />
-                            </div>
-
-                            {/* Tags */}
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-2">
-                                    Tags
-                                </label>
-                                <div className="flex gap-2 mb-2">
-                                    <input
-                                        type="text"
-                                        value={newTag}
-                                        onChange={(e) => setNewTag(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                                        placeholder="Tag hinzufügen..."
-                                        className="flex-1 px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={addTag}
-                                        className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors"
-                                    >
-                                        Hinzufügen
-                                    </button>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {formData.tags.map((tag, index) => (
-                                        <span
-                                            key={index}
-                                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-500/10 text-primary-500 text-sm"
-                                        >
-                                            {tag}
-                                            <button
-                                                type="button"
-                                                onClick={() => removeTag(tag)}
-                                                className="hover:text-primary-700"
-                                            >
-                                                ×
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
                             </div>
                         </div>
 

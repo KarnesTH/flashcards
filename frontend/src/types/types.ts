@@ -1,16 +1,14 @@
-/* Types */
-
 // User Types
 export interface User {
     id: number;
     username: string;
-    firstName?: string;
-    lastName?: string;
     email: string;
-    settings?: UserSettings;
-    avatar?: string;
+    first_name?: string;
+    last_name?: string;
     bio?: string;
-    stats?: Stats;
+    last_active?: string;
+    total_cards_created: number;
+    total_decks_created: number;
 }
 
 // Deck Types
@@ -18,13 +16,12 @@ export interface Deck {
     id: number;
     title: string;
     description: string;
-    createdAt?: string;  // Frontend-Feldname
-    updatedAt?: string;  // Frontend-Feldname
-    created_at?: string; // Backend-Feldname
-    updated_at?: string; // Backend-Feldname
-    is_public?: boolean;
-    tags: Tag[];
-    cards: Card[];
+    is_public: boolean;
+    created_at: string;
+    updated_at: string;
+    owner: User;
+    card_count: number;
+    cards?: Card[];
 }
 
 // Card Types
@@ -32,26 +29,31 @@ export interface Card {
     id: number;
     front: string;
     back: string;
+    created_at: string;
+    updated_at: string;
 }
 
-// Stats Types
-export interface Stats {
-    totalCardsCreated: number;
-    totalCardsReviewed: number;
-    totalLearningSessions: number;
-    averageAccuracy: number;
-    lastActive: string;
-}
-
-// Tag Types
-export interface Tag {
+// Learning Session Types
+export interface LearningSession {
     id: number;
-    name: string;
+    user: User;
+    deck: Deck;
+    status: 'active' | 'completed' | 'abandoned';
+    started_at: string;
+    ended_at?: string;
+    reviews_count: number;
 }
 
-/* Form Types */
+export interface CardReview {
+    id: number;
+    session: LearningSession;
+    card: Card;
+    is_correct: boolean;
+    time_taken: number;
+    created_at: string;
+}
 
-// Register Form Data
+// Form Types
 export interface RegisterFormData {
     username: string;
     email: string;
@@ -59,31 +61,19 @@ export interface RegisterFormData {
     confirmPassword: string;
 }
 
-// Login Form Data
 export interface LoginFormData {
     username: string;
     password: string;
 }
 
-// Settings Form Data
-export interface SettingsFormData {
-    user: User;
-    theme: Theme;
-    fontSize: FontSize;
-    privacySettings: PrivacySettings;
-    notificationSettings: NotificationSettings;
+export interface CreateDeckFormData {
+    title: string;
+    description: string;
+    is_public: boolean;
 }
 
-/* Settings Types */
-export type Theme = 'light' | 'dark' | 'system';
-export type FontSize = 'small' | 'medium' | 'large';
-export type PrivacySettings = 'show_stats' | 'show_decks' | 'show_progress';
-export type NotificationSettings = 'email_notifications' | 'learning_reminders' | 'achievement_alerts';
-
-export interface UserSettings {
-    user: User;
-    theme: Theme;
-    fontSize: FontSize;
-    privacySettings: PrivacySettings;
-    notificationSettings: NotificationSettings;
+export interface CreateCardFormData {
+    front: string;
+    back: string;
+    deck: number;
 }

@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import LearningSession from '../components/learning/LearningSession';
+---
+
+<Layout title="Lernen - Flashcards">
+    <div class="container mx-auto px-4 py-8">
+        <LearningSession client:load />
+    </div>
+</Layout>

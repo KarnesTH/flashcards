@@ -1,10 +1,9 @@
-from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from .models import Card, Deck, LearningSession, Settings, Tag
+from .models import Card, Deck, LearningSession, User
 
 
 class ModelTests(TestCase):
@@ -19,18 +18,15 @@ class ModelTests(TestCase):
             username='testuser',
             password='testpass123'
         )
-        self.tag = Tag.objects.create(name='Test Tag')
         self.deck = Deck.objects.create(
             owner=self.user,
             title='Test Deck',
             description='Test Description'
         )
-        self.deck.tags.add(self.tag)
         self.card = Card.objects.create(
             deck=self.deck,
             front='Test Front',
-            back='Test Back',
-            order=1
+            back='Test Back'
         )
 
     def test_deck_creation(self):
@@ -39,8 +35,7 @@ class ModelTests(TestCase):
         """
         self.assertEqual(self.deck.title, 'Test Deck')
         self.assertEqual(self.deck.owner, self.user)
-        self.assertEqual(self.deck.tags.count(), 1)
-        self.assertEqual(self.deck.tags.first(), self.tag)
+        self.assertEqual(self.deck.card_count, 1)
 
     def test_card_creation(self):
         """
@@ -49,7 +44,6 @@ class ModelTests(TestCase):
         self.assertEqual(self.card.front, 'Test Front')
         self.assertEqual(self.card.back, 'Test Back')
         self.assertEqual(self.card.deck, self.deck)
-        self.assertEqual(self.card.order, 1)
 
     def test_learning_session(self):
         """
@@ -64,22 +58,13 @@ class ModelTests(TestCase):
         self.assertEqual(session.deck, self.deck)
         self.assertIsNone(session.ended_at)
 
-    def test_settings_creation(self):
+    def test_user_statistics(self):
         """
-        Test Settings-Creation and Relationships
+        Test User Statistics Properties
         """
-        settings = Settings.objects.create(user=self.user)
-        self.assertEqual(settings.user, self.user)
-        self.assertEqual(settings.theme, Settings.Theme.SYSTEM)
-        self.assertEqual(settings.font_size, Settings.FontSize.MEDIUM)
-        self.assertEqual(
-            settings.privacy_settings, 
-            Settings.PrivacySettings.SHOW_STATS
-        )
-        self.assertEqual(
-            settings.notification_settings, 
-            Settings.NotificationSettings.EMAIL_NOTIFICATIONS
-        )
+        self.assertEqual(self.user.total_cards_created, 1)
+        self.assertEqual(self.user.total_decks_created, 1)
+
 
 class APITests(APITestCase):
     """
@@ -114,8 +99,8 @@ class APITests(APITestCase):
         url = reverse('deck-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['title'], 'Test Deck')
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['title'], 'Test Deck')
 
     def test_deck_create(self):
         """
@@ -140,8 +125,7 @@ class APITests(APITestCase):
         data = {
             'deck': self.deck.id,
             'front': 'New Front',
-            'back': 'New Back',
-            'order': 1
+            'back': 'New Back'
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -162,7 +146,7 @@ class APITests(APITestCase):
             'session_id': session_id,
             'card_id': self.card.id,
             'is_correct': True,
-            'difficulty_rating': 3
+            'time_taken': 5000
         }
         response = self.client.post(review_url, review_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)

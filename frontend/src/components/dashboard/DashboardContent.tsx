@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
-import type { Deck, Stats, User } from '../../types/types';
+import type { Deck, User } from '../../types/types';
 import DashboardCard from './DashboardCard';
 import DashboardStats from './DashboardStats';
 import DeckModal from '../modals/DeckModal';
@@ -22,11 +22,13 @@ const DashboardContent = () => {
             setIsLoading(true);
             setError(null);
 
-            const userData = await api.getCurrentUser();
+            const [userData, decksData] = await Promise.all([
+                api.getCurrentUser(),
+                api.getDecks()
+            ]);
+            
             setUser(userData);
-
-            const decksData = await api.getDecks();
-            setDecks(Array.isArray(decksData) ? decksData : []);
+            setDecks(decksData);
 
         } catch (err) {
             console.error('Fehler beim Laden der Dashboard-Daten:', err);
@@ -34,24 +36,6 @@ const DashboardContent = () => {
             setDecks([]);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleCreateDeck = () => {
-        setEditingDeck(null);
-        setIsModalOpen(true);
-    };
-
-    const handleEditDeck = (deck: Deck) => {
-        setEditingDeck(deck);
-        setIsModalOpen(true);
-    };
-
-    const handleSaveDeck = (savedDeck: Deck) => {
-        if (editingDeck) {
-            setDecks(decks.map(deck => deck.id === savedDeck.id ? savedDeck : deck));
-        } else {
-            setDecks([...decks, savedDeck]);
         }
     };
 
@@ -67,21 +51,30 @@ const DashboardContent = () => {
         }
     };
 
-    const handleTogglePublic = async (deckId: number, isPublic: boolean) => {
-        try {
-            const deckToUpdate = decks.find(deck => deck.id === deckId);
-            if (!deckToUpdate) return;
-
-            const updatedDeck = await api.updateDeck({
-                ...deckToUpdate,
-                is_public: isPublic
-            });
-
-            setDecks(decks.map(deck => deck.id === deckId ? updatedDeck : deck));
-        } catch (err) {
-            console.error('Fehler beim Ändern des Public-Status:', err);
-            alert('Fehler beim Ändern des Public-Status');
+    const handleSaveDeck = async (deck: Deck) => {
+        if (editingDeck) {
+            setDecks(decks.map(d => d.id === deck.id ? deck : d));
+        } else {
+            setDecks([deck, ...decks]);
         }
+        setEditingDeck(null);
+        
+        await loadDashboardData();
+    };
+
+    const openCreateModal = () => {
+        setEditingDeck(null);
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (deck: Deck) => {
+        setEditingDeck(deck);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingDeck(null);
     };
 
     if (isLoading) {
@@ -106,24 +99,13 @@ const DashboardContent = () => {
         );
     }
 
-    const stats: Stats = {
-        totalCardsCreated: user?.stats?.totalCardsCreated || 0,
-        totalCardsReviewed: user?.stats?.totalCardsReviewed || 0,
-        totalLearningSessions: user?.stats?.totalLearningSessions || 0,
-        averageAccuracy: user?.stats?.averageAccuracy || 0,
-        lastActive: user?.stats?.lastActive || new Date().toISOString()
-    };
-
-    // Sicherheitsüberprüfung für decks
-    const safeDecks = Array.isArray(decks) ? decks : [];
-
     return (
         <div className="space-y-6">
             <DashboardStats 
-                cards={stats.totalCardsCreated} 
-                decks={stats.totalLearningSessions} 
-                learnedCards={stats.totalCardsReviewed} 
-                averageScore={stats.averageAccuracy} 
+                cards={user?.total_cards_created || 0} 
+                decks={decks.length} 
+                learnedCards={0} 
+                averageScore={0} 
             />
 
             <div className="bg-background rounded-2xl shadow-lg border border-border p-8">
@@ -138,7 +120,7 @@ const DashboardContent = () => {
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
                         <button 
-                            onClick={handleCreateDeck}
+                            onClick={openCreateModal}
                             className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors flex items-center gap-2"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -156,53 +138,38 @@ const DashboardContent = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-6">
-                    <button className="px-3 py-1 rounded-lg bg-primary-500/10 text-primary-500 hover:bg-primary-500/20 transition-colors">
-                        Alle
-                    </button>
-                    <button className="px-3 py-1 rounded-lg bg-background border border-border text-foreground hover:bg-primary-500/10 transition-colors">
-                        Zuletzt bearbeitet
-                    </button>
-                    <button className="px-3 py-1 rounded-lg bg-background border border-border text-foreground hover:bg-primary-500/10 transition-colors">
-                        Meist gelernt
-                    </button>
-                </div>
-
-                {safeDecks.length === 0 ? (
+                {decks.length === 0 ? (
                     <div className="text-center py-8">
                         <p className="text-foreground/60">Noch keine Decks erstellt</p>
                         <button 
-                            onClick={handleCreateDeck}
-                            className="mt-4 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors"
+                            onClick={openCreateModal}
+                            className="mt-4 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors inline-block"
                         >
                             Erstelle dein erstes Deck
                         </button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {safeDecks.map((deck) => (
+                        {decks.map((deck) => (
                             <DashboardCard 
                                 key={deck.id} 
                                 {...deck} 
-                                onEdit={handleEditDeck}
                                 onDelete={handleDeleteDeck}
-                                onTogglePublic={handleTogglePublic}
+                                onEdit={() => openEditModal(deck)}
                             />
                         ))}
                     </div>
                 )}
             </div>
 
-            {isModalOpen && (
-                <DeckModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={handleSaveDeck}
-                    deck={editingDeck}
-                />
-            )}
+            <DeckModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                deck={editingDeck}
+                onSave={handleSaveDeck}
+            />
         </div>
     );
-};
+}
 
 export default DashboardContent; 

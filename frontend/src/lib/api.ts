@@ -1,112 +1,108 @@
-import type { Deck, User, UserSettings, Tag } from "../types/types";
+import type { User, Deck, Card, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData } from '../types/types';
 
-const API_URL = 'http://localhost:8000/api/v1';
-
-interface LoginCredentials {
-    username: string;
-    password: string;
-}
-
-interface RegisterCredentials {
-    username: string;
-    email: string;
-    password: string;
-    firstName?: string;
-    lastName?: string;
-}
-
-interface JWTResponse {
-    access: string;
-    refresh: string;
-}
-
-interface AuthResponse {
-    access: string;
-    refresh: string;
-    user: User;
-}
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 class ApiError extends Error {
-    constructor(public status: number, message: string) {
+    constructor(message: string, public status?: number) {
         super(message);
         this.name = 'ApiError';
     }
 }
 
-export const api = {
-    async login(credentials: LoginCredentials): Promise<AuthResponse> {
-        const response = await fetch(`${API_URL}/auth/jwt/create/`, {
-            method: 'POST',
+class Api {
+    private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+        const url = `${API_BASE_URL}${endpoint}`;
+        
+        const config: RequestInit = {
             headers: {
                 'Content-Type': 'application/json',
+                ...options.headers,
             },
-            body: JSON.stringify({
-                username: credentials.username,
-                password: credentials.password,
-            }),
-        });
-
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({}));
-            throw new ApiError(
-                response.status,
-                error.detail || 'Anmeldung fehlgeschlagen'
-            );
-        }
-
-        const jwtData: JWTResponse = await response.json();
-        localStorage.setItem('access_token', jwtData.access);
-        localStorage.setItem('refresh_token', jwtData.refresh);
-
-        const userData = await this.getCurrentUser();
-        return {
-            access: jwtData.access,
-            refresh: jwtData.refresh,
-            user: userData!,
+            ...options,
         };
-    },
 
-    async register(credentials: RegisterCredentials): Promise<AuthResponse> {
-        const response = await fetch(`${API_URL}/auth/users/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                username: credentials.username,
-                email: credentials.email,
-                password: credentials.password,
-                first_name: credentials.firstName || '',
-                last_name: credentials.lastName || '',
-            }),
-        });
-
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({}));
-            throw new ApiError(
-                response.status,
-                error.detail || 'Registrierung fehlgeschlagen'
-            );
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            config.headers = {
+                ...config.headers,
+                'Authorization': `Bearer ${token}`,
+            };
         }
 
-        return this.login({
-            username: credentials.username,
-            password: credentials.password,
-        });
-    },
+        try {
+            const response = await fetch(url, config);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new ApiError(
+                    errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+                    response.status
+                );
+            }
 
-    async logout() {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
+            return await response.json();
+        } catch (error) {
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            throw new ApiError(`Netzwerkfehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+        }
+    }
+
+    async register(data: RegisterFormData): Promise<{ access: string; refresh: string }> {
+        const response = await this.request('/auth/users/', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: data.username,
+                email: data.email,
+                password: data.password,
+            }),
+        });
+        
+        return this.login({
+            username: data.username,
+            password: data.password,
+        });
+    }
+
+    async login(data: LoginFormData): Promise<{ access: string; refresh: string }> {
+        const response = await this.request<{ access: string; refresh: string }>('/auth/jwt/create/', {
+            method: 'POST',
+            body: JSON.stringify({
+                username: data.username,
+                password: data.password,
+            }),
+        });
+        
+        localStorage.setItem('access_token', response.access);
+        localStorage.setItem('refresh_token', response.refresh);
+        
+        return response;
+    }
+
+    async refreshToken(): Promise<{ access: string }> {
+        const refresh = localStorage.getItem('refresh_token');
+        if (!refresh) {
+            throw new ApiError('Kein Refresh-Token vorhanden');
+        }
+
+        const response = await this.request<{ access: string }>('/auth/jwt/refresh/', {
+            method: 'POST',
+            body: JSON.stringify({ refresh }),
+        });
+        
+        localStorage.setItem('access_token', response.access);
+        
+        return response;
+    }
+
+    async logout(): Promise<void> {
+        const refresh = localStorage.getItem('refresh_token');
+        if (refresh) {
             try {
-                await fetch(`${API_URL}/auth/jwt/logout/`, {
+                await this.request('/auth/jwt/logout/', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        refresh: refreshToken,
-                    }),
+                    body: JSON.stringify({ refresh }),
                 });
             } catch (error) {
                 console.warn('Logout request failed:', error);
@@ -115,350 +111,129 @@ export const api = {
         
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-    },
+    }
 
-    async refreshToken(): Promise<string> {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-            throw new ApiError(401, 'Kein Refresh-Token verfügbar');
-        }
-
-        const response = await fetch(`${API_URL}/auth/jwt/refresh/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                refresh: refreshToken,
-            }),
-        });
-
-        if (!response.ok) {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            throw new ApiError(401, 'Refresh-Token abgelaufen');
-        }
-
-        const data = await response.json();
-        localStorage.setItem('access_token', data.access);
-        return data.access;
-    },
-
-    async getCurrentUser(): Promise<User | null> {
-        const token = localStorage.getItem('access_token');
-        if (!token) return null;
-
-        try {
-            const response = await fetch(`${API_URL}/auth/users/me/`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    try {
-                        const newToken = await this.refreshToken();
-                        const retryResponse = await fetch(`${API_URL}/auth/users/me/`, {
-                            headers: {
-                                'Authorization': `Bearer ${newToken}`,
-                            },
-                        });
-                        
-                        if (!retryResponse.ok) {
-                            localStorage.removeItem('access_token');
-                            localStorage.removeItem('refresh_token');
-                            return null;
-                        }
-                        
-                        return retryResponse.json();
-                    } catch (refreshError) {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        return null;
-                    }
-                }
-                throw new ApiError(response.status, 'Fehler beim Abrufen des Benutzers');
-            }
-
-            return response.json();
-        } catch (error) {
-            console.error('Error fetching current user:', error);
-            return null;
-        }
-    },
-
-    async fetchWithAuth(url: string, options: RequestInit = {}) {
-        let token = localStorage.getItem('access_token');
-        if (!token) throw new ApiError(401, 'Nicht authentifiziert');
-
-        const makeRequest = async (authToken: string) => {
-            const response = await fetch(url, {
-                ...options,
-                headers: {
-                    ...options.headers,
-                    'Authorization': `Bearer ${authToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    try {
-                        const newToken = await this.refreshToken();
-                        const retryResponse = await fetch(url, {
-                            ...options,
-                            headers: {
-                                ...options.headers,
-                                'Authorization': `Bearer ${newToken}`,
-                                'Content-Type': 'application/json',
-                            },
-                        });
-                        
-                        if (!retryResponse.ok) {
-                            localStorage.removeItem('access_token');
-                            localStorage.removeItem('refresh_token');
-                            throw new ApiError(401, 'Sitzung abgelaufen');
-                        }
-                        
-                        return retryResponse.json();
-                    } catch (refreshError) {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        throw new ApiError(401, 'Sitzung abgelaufen');
-                    }
-                }
-                const error = await response.json().catch(() => ({}));
-                throw new ApiError(response.status, error.detail || 'API-Fehler');
-            }
-
-            return response.json();
-        };
-
-        return makeRequest(token);
-    },
-
-    async getPublicProfile(username: string): Promise<User> {
-        return this.fetchWithAuth(`${API_URL}/auth/users/${username}/`);
-    },
-
-    async getUserSettings(): Promise<UserSettings> {
-        return this.fetchWithAuth(`${API_URL}/settings/`);
-    },
-
-    async updateUserSettings(settings: Partial<UserSettings>): Promise<UserSettings> {
-        return this.fetchWithAuth(`${API_URL}/settings/`, {
-            method: 'PATCH',
-            body: JSON.stringify(settings),
-        });
-    },
-
-    async updateProfile(profile: Partial<User>): Promise<User> {
-        return this.fetchWithAuth(`${API_URL}/auth/users/me/`, {
-            method: 'PATCH',
-            body: JSON.stringify(profile),
-        });
-    },
-
-    async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-        await this.fetchWithAuth(`${API_URL}/auth/users/set_password/`, {
-            method: 'POST',
-            body: JSON.stringify({
-                current_password: currentPassword,
-                new_password: newPassword,
-            }),
-        });
-    },
-
-    async resetPassword(email: string): Promise<void> {
-        await fetch(`${API_URL}/auth/users/reset_password/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email: email,
-            }),
-        });
-    },
+    async getCurrentUser(): Promise<User> {
+        return this.request('/auth/users/me/');
+    }
 
     async getDecks(): Promise<Deck[]> {
-        try {
-            const response = await this.fetchWithAuth(`${API_URL}/decks/`);
-            
-            if (response && typeof response === 'object' && 'results' in response) {
-                return response.results.map((deck: any) => ({
-                    ...deck,
-                    createdAt: deck.created_at,
-                    updatedAt: deck.updated_at
-                }));
-            } else if (Array.isArray(response)) {
-                return response.map(deck => ({
-                    ...deck,
-                    createdAt: deck.created_at,
-                    updatedAt: deck.updated_at
-                }));
-            } else {
-                return [];
-            }
-        } catch (error) {
-            console.error('Fehler beim Laden der Decks:', error);
-            return [];
-        }
-    },
+        const response = await this.request<{ results: Deck[] }>('/decks/');
+        return response.results || response;
+    }
 
-    async getTags(): Promise<Tag[]> {
-        try {
-            const response = await this.fetchWithAuth(`${API_URL}/tags/`);
-            return Array.isArray(response) ? response : [];
-        } catch (error) {
-            console.error('Fehler beim Laden der Tags:', error);
-            return [];
-        }
-    },
+    async getDeck(id: number): Promise<Deck> {
+        return this.request(`/decks/${id}/`);
+    }
 
-    async createTag(name: string): Promise<Tag> {
-        return this.fetchWithAuth(`${API_URL}/tags/`, {
+    async getDeckWithCards(id: number): Promise<Deck> {
+        return this.request(`/decks/${id}/`);
+    }
+
+    async createDeck(data: CreateDeckFormData): Promise<Deck> {
+        return this.request('/decks/', {
             method: 'POST',
-            body: JSON.stringify({ name }),
+            body: JSON.stringify(data),
         });
-    },
+    }
 
-    async getOrCreateTags(tagNames: string[]): Promise<number[]> {
-        const tagIds: number[] = [];
+    async updateDeck(id: number, data: Partial<CreateDeckFormData>): Promise<Deck> {
+        return this.request(`/decks/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteDeck(id: number): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/decks/${id}/`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        });
         
-        for (const tagName of tagNames) {
-            try {
-                const existingTags = await this.fetchWithAuth(`${API_URL}/tags/?search=${encodeURIComponent(tagName)}`);
-                let tagId: number;
-                
-                if (existingTags && existingTags.length > 0) {
-                    tagId = existingTags[0].id;
-                } else {
-                    const newTag = await this.createTag(tagName);
-                    tagId = newTag.id;
-                }
-                
-                tagIds.push(tagId);
-            } catch (error) {
-                console.error(`Fehler beim Verarbeiten des Tags "${tagName}":`, error);
-            }
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new ApiError(
+                errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+                response.status
+            );
         }
-        
-        return tagIds;
-    },
+    }
 
-    async createDeck(deck: Deck): Promise<Deck> {
-        try {
-            const tagIds = await this.getOrCreateTags(deck.tags?.map(t => t.name) || []);
-            
-            const { cards, tags, ...deckWithoutCards } = deck;
-            const createdDeck = await this.fetchWithAuth(`${API_URL}/decks/`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    ...deckWithoutCards,
-                    tags: tagIds
-                }),
-            });
+    async getCards(deckId?: number): Promise<Card[]> {
+        const params = deckId ? `?deck=${deckId}` : '';
+        const response = await this.request<{ results: Card[] }>(`/cards/${params}`);
+        return response.results || response;
+    }
 
-            if (cards && cards.length > 0) {
-                for (let i = 0; i < cards.length; i++) {
-                    const card = cards[i];
-                    await this.fetchWithAuth(`${API_URL}/cards/`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            deck: createdDeck.id,
-                            front: card.front,
-                            back: card.back,
-                            order: i + 1
-                        }),
-                    });
-                }
-            }
+    async createCard(data: CreateCardFormData): Promise<Card> {
+        return this.request('/cards/', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
 
-            const fullDeck = await this.fetchWithAuth(`${API_URL}/decks/${createdDeck.id}/`);
-            return {
-                ...fullDeck,
-                createdAt: fullDeck.created_at,
-                updatedAt: fullDeck.updated_at
-            };
-        } catch (error) {
-            console.error('Fehler beim Erstellen des Decks:', error);
-            throw error;
-        }
-    },
+    async updateCard(id: number, data: Partial<CreateCardFormData>): Promise<Card> {
+        return this.request(`/cards/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
 
-    async updateDeck(deck: Deck): Promise<Deck> {
-        try {
-            const tagIds = await this.getOrCreateTags(deck.tags?.map(t => t.name) || []);
-            
-            const { cards, tags, ...deckWithoutCards } = deck;
-            await this.fetchWithAuth(`${API_URL}/decks/${deck.id}/`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    ...deckWithoutCards,
-                    tags: tagIds
-                }),
-            });
-
-            if (cards && cards.length > 0) {
-                const existingCardsResponse = await this.fetchWithAuth(`${API_URL}/cards/?deck=${deck.id}`);
-                const existingCards = Array.isArray(existingCardsResponse) ? existingCardsResponse : 
-                                    (existingCardsResponse.results ? existingCardsResponse.results : []);
-
-                for (let i = 0; i < cards.length; i++) {
-                    const newCard = cards[i];
-                    const existingCard = existingCards.find((ec: any) => ec.order === i + 1);
-
-                    if (existingCard) {
-                        if (existingCard.front !== newCard.front || existingCard.back !== newCard.back) {
-                            await this.fetchWithAuth(`${API_URL}/cards/${existingCard.id}/`, {
-                                method: 'PUT',
-                                body: JSON.stringify({
-                                    front: newCard.front,
-                                    back: newCard.back,
-                                    order: i + 1
-                                }),
-                            });
-                        }
-                    } else {
-                        await this.fetchWithAuth(`${API_URL}/cards/`, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                deck: deck.id,
-                                front: newCard.front,
-                                back: newCard.back,
-                                order: i + 1
-                            }),
-                        });
-                    }
-                }
-
-                const cardsToKeep = cards.length;
-                for (const existingCard of existingCards) {
-                    if (existingCard.order > cardsToKeep) {
-                        await this.fetchWithAuth(`${API_URL}/cards/${existingCard.id}/`, {
-                            method: 'DELETE',
-                        });
-                    }
-                }
-            }
-
-            const fullDeck = await this.fetchWithAuth(`${API_URL}/decks/${deck.id}/`);
-            return {
-                ...fullDeck,
-                createdAt: fullDeck.created_at,
-                updatedAt: fullDeck.updated_at
-            };
-        } catch (error) {
-            console.error('Fehler beim Aktualisieren des Decks:', error);
-            throw error;
-        }
-    },
-
-    async deleteDeck(deckId: number): Promise<void> {
-        await this.fetchWithAuth(`${API_URL}/decks/${deckId}/`, {
+    async deleteCard(id: number): Promise<void> {
+        return this.request(`/cards/${id}/`, {
             method: 'DELETE',
         });
-    },
-};
+    }
+
+    async createLearningSession(deckId: number): Promise<any> {
+        return this.request('/learning-sessions/', {
+            method: 'POST',
+            body: JSON.stringify({ deck_id: deckId }),
+        });
+    }
+
+    async updateLearningSession(sessionId: number, status: string, endedAt?: string): Promise<any> {
+        const data: any = { status };
+        if (endedAt) {
+            data.ended_at = endedAt;
+        }
+        
+        return this.request(`/learning-sessions/${sessionId}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async completeLearningSession(sessionId: number): Promise<any> {
+        return this.request(`/learning-sessions/${sessionId}/complete/`, {
+            method: 'POST',
+        });
+    }
+
+    async createCardReview(
+        sessionId: number, 
+        cardId: number, 
+        isCorrect: boolean, 
+        difficultyRating?: number, 
+        timeTaken?: number
+    ): Promise<any> {
+        const data: any = {
+            session_id: sessionId,
+            card_id: cardId,
+            is_correct: isCorrect,
+        };
+        
+        if (timeTaken !== undefined) {
+            data.time_taken = timeTaken;
+        }
+        
+        return this.request('/card-reviews/', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+}
+
+export const api = new Api();
