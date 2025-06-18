@@ -108,8 +108,12 @@ const SettingsForm = () => {
                             </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
+                            <label htmlFor="publicProfile" className="sr-only">
+                                Profil Sichtbarkeit
+                            </label>
                             <input
                                 type="checkbox"
+                                id="publicProfile"
                                 checked={user?.is_public || false}
                                 onChange={async (e) => {
                                     if (!user) return;

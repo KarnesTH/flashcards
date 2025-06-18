@@ -1,34 +1,16 @@
-export interface LoginErrors {
-    username?: string;
-    password?: string;
-    message?: string;
+/**
+ * ApiError class for handling API errors
+ * 
+ * @example
+ * const error = new ApiError('API error', 500);
+ * console.log(error.message); // 'API error'
+ * console.log(error.status); // 500
+ */
+class ApiError extends Error {
+    constructor(message: string, public status?: number) {
+        super(message);
+        this.name = 'ApiError';
+    }
 }
 
-export interface RegisterErrors {
-    username?: string;
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-    message?: string;
-}
-
-export interface DeckErrors {
-    title?: string;
-    description?: string;
-    tags?: string[];
-    message?: string;
-}
-
-export interface CardErrors {
-    front?: string;
-    back?: string;
-    message?: string;
-}
-
-export interface StatsErrors {
-    totalCards?: string;
-    decksCreated?: string;
-    cardsLearned?: string;
-    averageScore?: string;
-    message?: string;
-}
+export { ApiError };

@@ -82,9 +82,11 @@ const NavbarList = () => {
                         {/* Profil-Dropdown */}
                         <div className="relative group">
                             <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-primary-100 transition-colors">
-                                <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">
-                                    {user.username[0].toUpperCase()}
-                                </div>
+                                <img 
+                                    src={user.avatar_url} 
+                                    alt="Profilbild" 
+                                    className="w-8 h-8 rounded-full border-2 border-primary-500/20 object-cover"
+                                />
                                 <span className="text-foreground">{user.username}</span>
                                 <svg 
                                     className="w-4 h-4 text-foreground transition-transform group-hover:rotate-180" 

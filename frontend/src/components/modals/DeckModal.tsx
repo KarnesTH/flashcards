@@ -153,11 +153,12 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                         {/* Deck-Informationen */}
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-2">
+                                <label htmlFor="deckTitle" className="block text-sm font-medium text-foreground mb-2">
                                     Titel *
                                 </label>
                                 <input
                                     type="text"
+                                    id="deckTitle"
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -166,10 +167,11 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-2">
+                                <label htmlFor="deckDescription" className="block text-sm font-medium text-foreground mb-2">
                                     Beschreibung
                                 </label>
                                 <textarea
+                                    id="deckDescription"
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     rows={3}
@@ -216,10 +218,11 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-foreground/60 mb-1">
+                                                    <label htmlFor="cardFront" className="block text-sm font-medium text-foreground/60 mb-1">
                                                         Vorderseite
                                                     </label>
                                                     <textarea
+                                                        id="cardFront"
                                                         value={card.front}
                                                         onChange={(e) => updateCard(index, 'front', e.target.value)}
                                                         rows={3}
@@ -228,10 +231,11 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-foreground/60 mb-1">
+                                                    <label htmlFor="cardBack" className="block text-sm font-medium text-foreground/60 mb-1">
                                                         Rückseite
                                                     </label>
                                                     <textarea
+                                                        id="cardBack"
                                                         value={card.back}
                                                         onChange={(e) => updateCard(index, 'back', e.target.value)}
                                                         rows={3}
