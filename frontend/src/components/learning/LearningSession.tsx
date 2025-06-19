@@ -3,6 +3,13 @@ import { api } from '../../lib/api';
 import type { Deck, LearningSession as LearningSessionType } from '../../types/types';
 import CardFlip from './CardFlip';
 
+/**
+ * LearningSession component
+ * 
+ * @description This component is used to display the learning session.
+ * 
+ * @returns The LearningSession component
+ */
 const LearningSession = () => {
     const [deckId, setDeckId] = useState<string | null>(null);
     const [deck, setDeck] = useState<Deck | null>(null);
@@ -31,6 +38,13 @@ const LearningSession = () => {
         initializeSession(deckIdFromUrl);
     }, []);
 
+    /**
+     * Initialize Session
+     * 
+     * @description This function is used to initialize the learning session.
+     * 
+     * @param deckIdParam - The id of the deck to initialize the session for
+     */
     const initializeSession = async (deckIdParam: string) => {
         try {
             setIsLoading(true);
@@ -52,6 +66,14 @@ const LearningSession = () => {
         }
     };
 
+    /**
+     * Handle Card Answer
+     * 
+     * @description This function is used to handle the card answer.
+     * 
+     * @param isCorrect - Whether the user's answer was correct
+     * @param timeTaken - The time taken to answer the question
+     */
     const handleCardAnswer = async (isCorrect: boolean, timeTaken?: number) => {
         if (!session || !deck || !deck.cards) return;
 
@@ -94,25 +116,24 @@ const LearningSession = () => {
         }
     };
 
+    /**
+     * Handle Previous
+     * 
+     * @description This function is used to handle the previous card.
+     * 
+     */
     const handlePrevious = () => {
         if (currentCardIndex > 0) {
             setCurrentCardIndex(prev => prev - 1);
         }
     };
 
-    const completeSession = async () => {
-        if (!session) return;
-
-        try {
-            await api.updateLearningSession(session.id, 'completed', new Date().toISOString());
-            
-            setIsCompleted(true);
-        } catch (err) {
-            console.error('Fehler beim Beenden der Session:', err);
-            setIsCompleted(true);
-        }
-    };
-
+    /**
+     * Handle Abandon
+     * 
+     * @description This function is used to handle the abandon of the learning session.
+     * 
+     */
     const handleAbandon = async () => {
         if (!session) return;
 
@@ -127,6 +148,12 @@ const LearningSession = () => {
         }
     };
 
+    /**
+     * Handle Back to Dashboard
+     * 
+     * @description This function is used to handle the back to the dashboard.
+     * 
+     */
     const handleBackToDashboard = () => {
         window.location.href = '/dashboard';
     };

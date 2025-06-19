@@ -16,8 +16,11 @@ class Api {
     /**
      * Make a request to the API
      * 
+     * @description This function is used to make a request to the API.
+     * 
      * @param endpoint - The endpoint to request
      * @param options - The options for the request
+     * 
      * @returns The response from the API
      */
     private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -62,7 +65,10 @@ class Api {
     /**
      * Register a new user
      * 
+     * @description This function is used to register a new user.
+     * 
      * @param data - The data for the registration
+     * 
      * @returns The response from the API
      */
     async register(data: RegisterFormData): Promise<{ access: string; refresh: string }> {
@@ -84,7 +90,10 @@ class Api {
     /**
      * Login a user
      * 
+     * @description This function is used to login a user.
+     * 
      * @param data - The data for the login
+     * 
      * @returns The response from the API
      */
     async login(data: LoginFormData): Promise<{ access: string; refresh: string }> {
@@ -104,6 +113,8 @@ class Api {
 
     /**
      * Refresh a token
+     * 
+     * @description This function is used to refresh a token.
      * 
      * @returns The response from the API
      */
@@ -125,6 +136,8 @@ class Api {
 
     /**
      * Logout a user
+     * 
+     * @description This function is used to logout a user.
      * 
      * @returns The response from the API
      */
@@ -148,6 +161,8 @@ class Api {
     /**
      * Get the current user
      * 
+     * @description This function is used to get the current user.
+     * 
      * @returns The current user
      */
     async getCurrentUser(): Promise<User> {
@@ -157,7 +172,10 @@ class Api {
     /**
      * Update the current user
      * 
+     * @description This function is used to update the current user.
+     * 
      * @param data - The data for the update
+     * 
      * @returns The updated user
      */
     async updateUser(data: Partial<User>): Promise<User> {
@@ -170,7 +188,10 @@ class Api {
     /**
      * Upload an avatar
      * 
+     * @description This function is used to upload an avatar.
+     * 
      * @param file - The file to upload
+     * 
      * @returns The response from the API
      */
     async uploadAvatar(file: File): Promise<{ message: string; avatar_url: string }> {
@@ -202,6 +223,8 @@ class Api {
     /**
      * Delete an avatar
      * 
+     * @description This function is used to delete an avatar.
+     * 
      * @returns The response from the API
      */
     async deleteAvatar(): Promise<{ message: string }> {
@@ -213,6 +236,8 @@ class Api {
     /**
      * Get all decks
      * 
+     * @description This function is used to get all decks.
+     * 
      * @returns The response from the API
      */
     async getDecks(): Promise<Deck[]> {
@@ -223,7 +248,10 @@ class Api {
     /**
      * Get a deck
      * 
+     * @description This function is used to get a deck.
+     * 
      * @param id - The ID of the deck
+     * 
      * @returns The response from the API
      */
     async getDeck(id: number): Promise<Deck> {
@@ -233,7 +261,10 @@ class Api {
     /**
      * Get a deck with cards
      * 
+     * @description This function is used to get a deck with cards.
+     * 
      * @param id - The ID of the deck
+     * 
      * @returns The response from the API
      */
     async getDeckWithCards(id: number): Promise<Deck> {
@@ -243,7 +274,10 @@ class Api {
     /**
      * Create a deck
      * 
+     * @description This function is used to create a deck.
+     * 
      * @param data - The data for the deck
+     * 
      * @returns The response from the API
      */
     async createDeck(data: CreateDeckFormData): Promise<Deck> {
@@ -256,8 +290,11 @@ class Api {
     /**
      * Update a deck
      * 
+     * @description This function is used to update a deck.
+     * 
      * @param id - The ID of the deck
      * @param data - The data for the update
+     * 
      * @returns The response from the API
      */
     async updateDeck(id: number, data: Partial<CreateDeckFormData>): Promise<Deck> {
@@ -270,7 +307,10 @@ class Api {
     /**
      * Delete a deck
      * 
+     * @description This function is used to delete a deck.
+     * 
      * @param id - The ID of the deck
+     * 
      * @returns The response from the API
      */
     async deleteDeck(id: number): Promise<void> {
@@ -293,7 +333,10 @@ class Api {
     /**
      * Get all cards
      * 
+     * @description This function is used to get all cards.
+     * 
      * @param deckId - The ID of the deck
+     * 
      * @returns The response from the API
      */
     async getCards(deckId?: number): Promise<Card[]> {
@@ -305,7 +348,10 @@ class Api {
     /**
      * Create a card
      * 
+     * @description This function is used to create a card.
+     * 
      * @param data - The data for the card
+     * 
      * @returns The response from the API
      */
     async createCard(data: CreateCardFormData): Promise<Card> {
@@ -318,8 +364,11 @@ class Api {
     /**
      * Update a card
      * 
+     * @description This function is used to update a card.
+     * 
      * @param id - The ID of the card
      * @param data - The data for the update
+     * 
      * @returns The response from the API
      */
     async updateCard(id: number, data: Partial<CreateCardFormData>): Promise<Card> {
@@ -332,7 +381,10 @@ class Api {
     /**
      * Delete a card
      * 
+     * @description This function is used to delete a card.
+     * 
      * @param id - The ID of the card
+     * 
      * @returns The response from the API
      */
     async deleteCard(id: number): Promise<void> {
@@ -355,7 +407,10 @@ class Api {
     /**
      * Create a learning session
      * 
+     * @description This function is used to create a learning session.
+     * 
      * @param deckId - The ID of the deck
+     * 
      * @returns The response from the API
      */
     async createLearningSession(deckId: number): Promise<any> {
@@ -368,9 +423,12 @@ class Api {
     /**
      * Update a learning session
      * 
+     * @description This function is used to update a learning session.
+     * 
      * @param sessionId - The ID of the session
      * @param status - The status of the session
      * @param endedAt - The date and time the session ended
+     * 
      * @returns The response from the API
      */
     async updateLearningSession(sessionId: number, status: string, endedAt?: string): Promise<any> {
@@ -388,7 +446,10 @@ class Api {
     /**
      * Complete a learning session
      * 
+     * @description This function is used to complete a learning session.
+     * 
      * @param sessionId - The ID of the session
+     * 
      * @returns The response from the API
      */
     async completeLearningSession(sessionId: number): Promise<any> {
@@ -400,11 +461,14 @@ class Api {
     /**
      * Create a card review
      * 
+     * @description This function is used to create a card review.
+     * 
      * @param sessionId - The ID of the session
      * @param cardId - The ID of the card
      * @param isCorrect - Whether the card was correct
      * @param difficultyRating - The difficulty rating of the card
      * @param timeTaken - The time taken to answer the card
+     * 
      * @returns The response from the API
      */
     async createCardReview(

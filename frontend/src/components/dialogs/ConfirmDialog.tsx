@@ -18,9 +18,23 @@ interface DialogProps {
  * 
  * @description This component is used to display a confirm dialog. It is used to confirm a delete action.
  * 
+ * @param title - The title of the dialog
+ * @param message - The message of the dialog
+ * @param isOpen - Whether the dialog is open
+ * @param onClose - The function to close the dialog
+ * @param onContinue - The function to continue the dialog
+ * 
  * @returns The ConfirmDialog component
  */
-const ConfirmDialog = ({ title, message, isOpen, onClose, onContinue }: DialogProps) => {
+const ConfirmDialog = ({ 
+    title, 
+    message, 
+    isOpen, 
+    onClose, 
+    onContinue 
+}: DialogProps) => {
+    if (!isOpen) return null;
+    
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-background rounded-2xl shadow-xl border border-border overflow-hidden w-full max-w-md">

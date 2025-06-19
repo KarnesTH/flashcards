@@ -1,3 +1,9 @@
+
+/**
+ * DashboardStatsProps interface
+ * 
+ * @description This interface is used to define the props for the DashboardStats component.
+ */
 interface DashboardStatsProps {
     cards: number;
     decks: number;
@@ -7,6 +13,20 @@ interface DashboardStatsProps {
     totalReviews?: number;
 }
 
+/**
+ * DashboardStats component
+ * 
+ * @description This component is used to display the dashboard stats.
+ * 
+ * @param cards - The number of cards.
+ * @param decks - The number of decks.
+ * @param learnedCards - The number of learned cards.
+ * @param averageScore - The average score.
+ * @param learningSessions - The number of learning sessions.
+ * @param totalReviews - The number of total reviews.
+ * 
+ * @returns The DashboardStats component
+ */
 const DashboardStats = ({ 
     cards, 
     decks, 

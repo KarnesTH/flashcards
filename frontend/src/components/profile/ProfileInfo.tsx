@@ -2,6 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import { api } from "../../lib/api";
 import type { User } from "../../types/types";
 
+/**
+ * ProfileInfo component
+ * 
+ * @description This component is used to display the profile info.
+ * 
+ * @returns The ProfileInfo component
+ */
 const ProfileInfo = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -13,6 +20,12 @@ const ProfileInfo = () => {
         checkAuth();
     }, []);
 
+    /**
+     * Check Auth
+     * 
+     * @description This function is used to check the auth status.
+     * 
+     */
     const checkAuth = async () => {
         try {
             const userData = await api.getCurrentUser();
@@ -24,6 +37,12 @@ const ProfileInfo = () => {
         }
     }
 
+    /**
+     * Handle Toggle Public
+     * 
+     * @description This function is used to handle the toggle public.
+     * 
+     */
     const handleTogglePublic = async () => {
         if (!user) return;
         
@@ -41,6 +60,13 @@ const ProfileInfo = () => {
         }
     };
 
+    /**
+     * Handle Avatar Upload
+     * 
+     * @description This function is used to handle the avatar upload.
+     * 
+     * @param event - The event object
+     */
     const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !user) return;
@@ -70,6 +96,12 @@ const ProfileInfo = () => {
         }
     };
 
+    /**
+     * Handle Avatar Delete
+     * 
+     * @description This function is used to handle the avatar delete.
+     * 
+     */
     const handleAvatarDelete = async () => {
         if (!user || !user.avatar) return;
 

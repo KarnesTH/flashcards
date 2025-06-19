@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import type { User } from '../../types/types';
 
+/**
+ * SettingsForm component
+ * 
+ * @description This component is used to display the settings form.
+ * 
+ * @returns The SettingsForm component
+ */
 const SettingsForm = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -13,6 +20,12 @@ const SettingsForm = () => {
         checkUserSettings();
     }, []);
 
+    /**
+     * Check User Settings
+     * 
+     * @description This function is used to check the user settings.
+     * 
+     */
     const checkUserSettings = async () => {
         try {
             const userData = await api.getCurrentUser();
@@ -24,6 +37,12 @@ const SettingsForm = () => {
         }
     };
 
+    /**
+     * Handle Save
+     * 
+     * @description This function is used to handle the save of the settings.
+     * 
+     */
     const handleSave = async () => {
         if (!user) return;
         

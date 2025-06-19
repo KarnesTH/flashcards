@@ -57,6 +57,7 @@ const DashboardContent = () => {
      * 
      * @description This function is used to delete a deck.
      * 
+     * @param deckId - The id of the deck to delete
      */
     const handleDeleteDeck = async (deckId: number) => {
         try {
@@ -72,6 +73,8 @@ const DashboardContent = () => {
      * Handle Save Deck
      * 
      * @description This function is used to save a deck.
+     * 
+     * @param deck - The deck to save
      * 
      */
     const handleSaveDeck = async (deck: Deck) => {
@@ -100,6 +103,8 @@ const DashboardContent = () => {
      * Open Edit Modal
      * 
      * @description This function is used to open the edit modal.
+     * 
+     * @param deck - The deck to edit
      * 
      */
     const openEditModal = async (deck: Deck) => {

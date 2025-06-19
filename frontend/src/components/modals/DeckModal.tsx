@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import type { Deck, Card } from '../../types/types';
 
+/**
+ * DeckModalProps interface
+ * 
+ * @description This interface is used to define the props for the DeckModal component.
+ */
 interface DeckModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -9,11 +14,28 @@ interface DeckModalProps {
     onSave: (deck: Deck) => void;
 }
 
+/**
+ * DeckFormData interface
+ * 
+ * @description This interface is used to define the form data for the DeckModal component.
+ */
 interface DeckFormData {
     title: string;
     description: string;
 }
 
+/**
+ * DeckModal component
+ * 
+ * @description This component is used to display the deck modal.
+ * 
+ * @param isOpen - Whether the modal is open
+ * @param onClose - The function to close the modal
+ * @param deck - The deck to edit
+ * @param onSave - The function to save the deck
+ * 
+ * @returns The DeckModal component
+ */
 const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
     const [formData, setFormData] = useState<DeckFormData>({
         title: '',
@@ -40,6 +62,13 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         setError(null);
     }, [deck, isOpen]);
 
+    /**
+     * Handle Submit
+     * 
+     * @description This function is used to handle the submit of the form.
+     * 
+     * @param e - The form event
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -102,6 +131,12 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         }
     };
 
+    /**
+     * Add Card
+     * 
+     * @description This function is used to add a card to the deck.
+     * 
+     */
     const addCard = () => {
         const newCard: Card = {
             id: Date.now(),
@@ -113,12 +148,28 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         setCards([...cards, newCard]);
     };
 
+    /**
+     * Update Card
+     * 
+     * @description This function is used to update a card.
+     * 
+     * @param index - The index of the card
+     * @param field - The field to update
+     * @param value - The value to update the field with
+     */
     const updateCard = (index: number, field: 'front' | 'back', value: string) => {
         const updatedCards = [...cards];
         updatedCards[index] = { ...updatedCards[index], [field]: value };
         setCards(updatedCards);
     };
 
+    /**
+     * Remove Card
+     * 
+     * @description This function is used to remove a card from the deck.
+     * 
+     * @param index - The index of the card
+     */
     const removeCard = (index: number) => {
         setCards(cards.filter((_, i) => i !== index));
     };
@@ -129,7 +180,7 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-background rounded-2xl shadow-xl border border-border max-w-4xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex justify-between items-center p-6 border-b border-border">
-                    <h2 className="text-2xl font-bold text-foreground">
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                         {deck ? 'Deck bearbeiten' : 'Neues Deck erstellen'}
                     </h2>
                     <button

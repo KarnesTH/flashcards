@@ -7,8 +7,6 @@ import ConfirmDialog from "../dialogs/ConfirmDialog";
  * DashboardCardProps
  * 
  * @description This interface is used to define the props for the DashboardCard component.
- * 
- * @param id - The id of the deck
  */
 interface DashboardCardProps {
     id: number;
@@ -27,6 +25,17 @@ interface DashboardCardProps {
  * DashboardCard component
  * 
  * @description This component is used to display a deck on the dashboard.
+ * 
+ * @param id - The id of the deck
+ * @param title - The title of the deck
+ * @param description - The description of the deck
+ * @param cards - The cards of the deck
+ * @param created_at - The date the deck was created
+ * @param updated_at - The date the deck was last updated
+ * @param is_public - Whether the deck is public
+ * @param card_count - The number of cards in the deck
+ * @param onDelete - The function to delete the deck
+ * @param onEdit - The function to edit the deck
  * 
  * @param props - The props for the DashboardCard component
  */

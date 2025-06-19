@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { Card } from '../../types/types';
 
+/**
+ * CardFlipProps interface
+ * 
+ * @description This interface is used to define the props for the CardFlip component.
+ */
 interface CardFlipProps {
     card: Card;
     onNext: (isCorrect: boolean, timeTaken?: number) => void;
@@ -11,6 +16,21 @@ interface CardFlipProps {
     totalCards: number;
 }
 
+/**
+ * CardFlip component
+ * 
+ * @description This component is used to display a card flip.
+ * 
+ * @param card - The card to display
+ * @param onNext - The function to call when the user has answered the question
+ * @param onPrevious - The function to call when the user wants to go back
+ * @param isFirst - Whether the current card is the first card
+ * @param isLast - Whether the current card is the last card
+ * @param currentIndex - The index of the current card
+ * @param totalCards - The total number of cards
+ * 
+ * @returns The CardFlip component
+ */
 const CardFlip = ({ 
     card, 
     onNext, 
@@ -32,6 +52,12 @@ const CardFlip = ({
         setStartTime(Date.now());
     }, [card.id]);
 
+    /**
+     * Handle Submit Answer
+     * 
+     * @description This function is used to submit the user's answer.
+     * 
+     */
     const handleSubmitAnswer = () => {
         if (!userAnswer.trim()) return;
         
@@ -43,11 +69,24 @@ const CardFlip = ({
         setShowAnswer(true);
     };
 
+    /**
+     * Handle Confirm Answer
+     * 
+     * @description This function is used to confirm the user's answer.
+     * 
+     */
     const handleConfirmAnswer = () => {
         const timeTaken = Date.now() - startTime;
         onNext(isCorrect, timeTaken);
     };
 
+    /**
+     * Handle Key Press
+     * 
+     * @description This function is used to handle the key press event.
+     * 
+     * @param e - The keyboard event
+     */
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !showAnswer) {
             handleSubmitAnswer();
