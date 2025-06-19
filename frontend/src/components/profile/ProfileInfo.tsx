@@ -15,6 +15,7 @@ const ProfileInfo = () => {
     const [isUpdating, setIsUpdating] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isPublic, setIsPublic] = useState(false);
 
     useEffect(() => {
         checkAuth();
@@ -30,6 +31,7 @@ const ProfileInfo = () => {
         try {
             const userData = await api.getCurrentUser();
             setUser(userData);
+            setIsPublic(userData.is_public);
         } catch (err) {
             setUser(null);
         } finally {
@@ -49,10 +51,10 @@ const ProfileInfo = () => {
         setIsUpdating(true);
         try {
             const updatedUser = await api.updateUser({
-                ...user,
-                is_public: !user.is_public
+                is_public: !isPublic
             });
             setUser(updatedUser);
+            setIsPublic(!isPublic);
         } catch (error) {
             console.error('Fehler beim Aktualisieren der Profilsichtbarkeit:', error);
         } finally {
@@ -207,7 +209,7 @@ const ProfileInfo = () => {
                     <div>
                         <h3 className="text-lg font-medium text-foreground">Profil öffentlich machen</h3>
                         <p className="text-sm text-foreground/60 mt-1">
-                            {user.is_public 
+                            {isPublic 
                                 ? 'Dein Profil ist öffentlich sichtbar' 
                                 : 'Dein Profil ist nur für dich sichtbar'
                             }
@@ -220,7 +222,7 @@ const ProfileInfo = () => {
                         <input
                             type="checkbox"
                             id="publicProfile"
-                            checked={user.is_public}
+                            checked={isPublic}
                             onChange={handleTogglePublic}
                             disabled={isUpdating}
                             className="sr-only peer"

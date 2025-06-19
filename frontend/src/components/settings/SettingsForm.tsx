@@ -15,6 +15,7 @@ const SettingsForm = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [isPublic, setIsPublic] = useState(false);
 
     useEffect(() => {
         checkUserSettings();
@@ -30,6 +31,7 @@ const SettingsForm = () => {
         try {
             const userData = await api.getCurrentUser();
             setUser(userData);
+            setIsPublic(userData.is_public);
         } catch (error) {
             console.error('Fehler beim Abrufen der Benutzerdaten:', error);
         } finally {
@@ -51,7 +53,11 @@ const SettingsForm = () => {
         setSuccess(null);
         
         try {
-            await api.updateUser(user);
+            await api.updateUser({
+                bio: user.bio,
+                email: user.email,
+                is_public: isPublic,
+            });
             setSuccess('Einstellungen erfolgreich gespeichert');
         } catch (error) {
             console.error('Fehler beim Speichern der Einstellungen:', error);
@@ -60,6 +66,18 @@ const SettingsForm = () => {
             setIsSaving(false);
         }
     };
+
+    /**
+     * Handle Public Profile Change
+     * 
+     * @description This function is used to handle the change of the public profile.
+     * 
+     */
+    const handleTogglePublicProfile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!user) return;
+
+        setIsPublic(e.target.checked);
+    }
 
     if (isLoading) {
         return (
@@ -72,12 +90,12 @@ const SettingsForm = () => {
     return (
         <div className="space-y-8">
             {error && (
-                <div className="p-4 rounded-lg bg-red-500/10 text-red-500">
+                <div className="p-4 rounded-lg border border-danger-500 text-danger-500">
                     {error}
                 </div>
             )}
             {success && (
-                <div className="p-4 rounded-lg bg-green-500/10 text-green-500">
+                <div className="p-4 rounded-lg border border-success-500 text-success-500">
                     {success}
                 </div>
             )}
@@ -133,21 +151,8 @@ const SettingsForm = () => {
                             <input
                                 type="checkbox"
                                 id="publicProfile"
-                                checked={user?.is_public || false}
-                                onChange={async (e) => {
-                                    if (!user) return;
-                                    try {
-                                        const updatedUser = await api.updateUser({
-                                            ...user,
-                                            is_public: e.target.checked
-                                        });
-                                        setUser(updatedUser);
-                                        setSuccess('Profil-Sichtbarkeit aktualisiert');
-                                    } catch (error) {
-                                        console.error('Fehler beim Aktualisieren der Profilsichtbarkeit:', error);
-                                        setError('Fehler beim Aktualisieren der Profilsichtbarkeit');
-                                    }
-                                }}
+                                checked={isPublic}
+                                onChange={handleTogglePublicProfile}
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-background border border-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-primary-500 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500/20"></div>
