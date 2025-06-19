@@ -1,16 +1,30 @@
 import { useState } from 'react';
 import { api } from '../../lib/api';
-import type { LoginErrors } from '../../types/errors';
 import type { LoginFormData } from '../../types/types';
+import { LoginError } from '../../types/errors';
 
+/**
+ * LoginForm component
+ * 
+ * @returns The LoginForm component
+ */
 const LoginForm = () => {
     const [formData, setFormData] = useState<LoginFormData>({
         username: '',
         password: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<LoginErrors | null>(null);
+    const [error, setError] = useState<LoginError | null>(null);
 
+    /**
+     * Handle the form submission
+     * 
+     * @description This function is used to handle the form submission.
+     * It will submit the form data to the API and redirect to the dashboard if successful.
+     * If there is an error, it will set the error state and display the error message.
+     * 
+     * @param e - The form event
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -20,11 +34,11 @@ const LoginForm = () => {
             await api.login(formData);
             window.location.href = '/dashboard';
         } catch (err) {
-            if (err instanceof Error) {
-                setError({ message: err.message });
-            } else {
-                setError({ message: 'Ein unbekannter Fehler ist aufgetreten' });
-            }
+            setError(
+                err instanceof LoginError ? err : new LoginError(
+                    'Bitte überprüfe deine Eingaben und versuche es erneut.'
+                )
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -39,7 +53,7 @@ const LoginForm = () => {
             )}
             
             <div>
-                <label htmlFor="username" className="block text-sm font-medium text-foreground">
+                <label htmlFor="username" className="block text-sm font-medium text-primary-600">
                     Benutzername
                 </label>
                 <input
@@ -48,13 +62,13 @@ const LoginForm = () => {
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     required
-                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:outline-primary-500 focus:ring-primary-500"
                     disabled={isSubmitting}
                 />
             </div>
 
             <div>
-                <label htmlFor="password" className="block text-sm font-medium text-foreground">
+                <label htmlFor="password" className="block text-sm font-medium text-primary-600">
                     Passwort
                 </label>
                 <input
@@ -63,7 +77,7 @@ const LoginForm = () => {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
-                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:outline-primary-500 focus:ring-primary-500"
                     disabled={isSubmitting}
                 />
             </div>

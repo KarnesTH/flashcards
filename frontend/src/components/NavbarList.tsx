@@ -2,15 +2,38 @@ import { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 import type { User } from '../types/types';
 
+/**
+ * NavbarList component
+ * 
+ * @description This component is used to display the navbar list.
+ * It will check if the user is authenticated and display the appropriate links.
+ * 
+ * @returns The NavbarList component
+ */
 const NavbarList = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        checkAuth();
+        if (localStorage.getItem('access_token')) {
+            checkAuth();
+        } else {
+            setUser(null);
+            setIsLoading(false);
+        }
     }, []);
 
+    /**
+     * Check if the user is authenticated
+     * 
+     * @description This function is used to check if the user is authenticated.
+     * It will check if the user has a valid access token in the local storage.
+     * If the user is authenticated, it will fetch the user data from the API.
+     * If the user is not authenticated, it will set the user to null and set the loading state to false.
+     * 
+     * @returns The user data
+     */
     const checkAuth = async () => {
         try {
             const userData = await api.getCurrentUser();
@@ -22,6 +45,15 @@ const NavbarList = () => {
         }
     }
 
+    /**
+     * Handle the logout
+     * 
+     * @description This function is used to handle the logout.
+     * It will logout the user by calling the logout function from the API.
+     * It will then set the user to null and redirect to the login page.
+     * 
+     * @returns The response from the API
+     */
     const handleLogout = async () => {
         await api.logout();
         setUser(null);

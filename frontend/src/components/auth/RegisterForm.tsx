@@ -1,71 +1,62 @@
 import { useState } from "react";
 import { api } from "../../lib/api";
+import { RegisterError, type RegisterFormData } from "../../types/errors";
 
-interface FormErrors {
-    username?: string;
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-}
-
+/**
+ * RegisterForm component
+ * 
+ * @description This component is used to register a new user.
+ * It will validate the form data and submit it to the API.
+ * If the registration is successful, it will redirect to the dashboard.
+ * If there is an error, it will set the error state and display the error message.
+ * 
+ * @returns The RegisterForm component
+ */
 const RegisterForm = () => {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<RegisterFormData>({
         username: "",
         email: "",
         password: "",
         confirmPassword: ""
     });
-    const [errors, setErrors] = useState<FormErrors>({});
+    const [errors, setErrors] = useState<RegisterError | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    const validateForm = (): boolean => {
-        const newErrors: FormErrors = {};
-        
-        if (!formData.username) {
-            newErrors.username = "Benutzername ist erforderlich";
-        } else if (formData.username.length < 3) {
-            newErrors.username = "Benutzername muss mindestens 3 Zeichen lang sein";
-        }
-
-        if (!formData.email) {
-            newErrors.email = "E-Mail ist erforderlich";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = "Ungültige E-Mail-Adresse";
-        }
-
-        if (!formData.password) {
-            newErrors.password = "Passwort ist erforderlich";
-        } else if (formData.password.length < 8) {
-            newErrors.password = "Passwort muss mindestens 8 Zeichen lang sein";
-        }
-
-        if (!formData.confirmPassword) {
-            newErrors.confirmPassword = "Bitte bestätige dein Passwort";
-        } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = "Passwörter stimmen nicht überein";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
+    /**
+     * Handle the form submission
+     * 
+     * @description This function is used to handle the form submission.
+     * It will validate the form data, submit it to the API and redirect to the dashboard if successful.
+     * If there is an error, it will set the error state and display the error message.
+     * 
+     * @param e - The form event
+     */
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setSubmitError(null);
-        if (!validateForm()) return;
+        
+        const validationError = RegisterError.validateForm(formData);
+        if (validationError) {
+            setErrors(validationError);
+            return;
+        }
 
+        setErrors(null);
+        setSubmitError(null);
         setIsLoading(true);
+        
         try {
             await api.register({
-                username: formData.username,
-                email: formData.email,
-                password: formData.password,
-                confirmPassword: formData.confirmPassword
+                username: formData.username!,
+                email: formData.email!,
+                password: formData.password!,
+                confirmPassword: formData.confirmPassword!
             });
             window.location.href = '/dashboard';
         } catch (err) {
-            if (err instanceof Error) {
+            if (err instanceof RegisterError) {
+                setErrors(err);
+            } else if (err instanceof Error) {
                 setSubmitError(err.message);
             } else {
                 setSubmitError('Ein unbekannter Fehler ist aufgetreten');
@@ -75,24 +66,35 @@ const RegisterForm = () => {
         }
     };
 
+    /**
+     * Handle the form change
+     * 
+     * @description This function is used to handle the form change.
+     * It will update the form data and clear the error state if the form data is valid.
+     * 
+     * @param e - The form event
+     */
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
-        if (errors[name as keyof FormErrors]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: undefined
-            }));
+        
+        if (errors?.formErrors[name as keyof typeof errors.formErrors]) {
+            setErrors(prev => {
+                if (!prev) return null;
+                const newErrors = new RegisterError(prev.message, { ...prev.formErrors });
+                delete newErrors.formErrors[name as keyof typeof newErrors.formErrors];
+                return Object.keys(newErrors.formErrors).length > 0 ? newErrors : null;
+            });
         }
     };
 
     return (
         <form className="space-y-6" onSubmit={handleSubmit}>
             {submitError && (
-                <div className="bg-danger-50 border border-danger-200 text-danger-600 px-4 py-3 rounded-lg">
+                <div className="bg-transparent border border-danger-500 text-danger-500 px-4 py-3 rounded-lg">
                     {submitError}
                 </div>
             )}
@@ -100,7 +102,7 @@ const RegisterForm = () => {
             <div>
                 <label 
                     htmlFor="username" 
-                    className="block text-sm font-medium text-foreground"
+                    className="block text-sm font-medium text-primary-600"
                 >
                     Benutzername
                 </label>
@@ -111,12 +113,12 @@ const RegisterForm = () => {
                     value={formData.username}
                     onChange={handleChange}
                     required
-                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:outline-primary-500 focus:ring-primary-500"
                     disabled={isLoading}
                 />
-                {errors.username && (
+                {errors?.formErrors.username && (
                     <p className="mt-1 text-sm text-danger-500">
-                        {errors.username}
+                        {errors.formErrors.username}
                     </p>
                 )}
             </div>
@@ -124,7 +126,7 @@ const RegisterForm = () => {
             <div>
                 <label 
                     htmlFor="email" 
-                    className="block text-sm font-medium text-foreground"
+                    className="block text-sm font-medium text-primary-600"
                 >
                     E-Mail
                 </label>
@@ -135,12 +137,12 @@ const RegisterForm = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:outline-primary-500 focus:ring-primary-500"
                     disabled={isLoading}
                 />
-                {errors.email && (
+                {errors?.formErrors.email && (
                     <p className="mt-1 text-sm text-danger-500">
-                        {errors.email}
+                        {errors.formErrors.email}
                     </p>
                 )}
             </div>
@@ -148,7 +150,7 @@ const RegisterForm = () => {
             <div>
                 <label 
                     htmlFor="password" 
-                    className="block text-sm font-medium text-foreground"
+                    className="block text-sm font-medium text-primary-600"
                 >
                     Passwort
                 </label>
@@ -159,12 +161,12 @@ const RegisterForm = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:outline-primary-500 focus:ring-primary-500"
                     disabled={isLoading}
                 />
-                {errors.password && (
+                {errors?.formErrors.password && (
                     <p className="mt-1 text-sm text-danger-500">
-                        {errors.password}
+                        {errors.formErrors.password}
                     </p>
                 )}
             </div>
@@ -172,7 +174,7 @@ const RegisterForm = () => {
             <div>
                 <label 
                     htmlFor="confirmPassword" 
-                    className="block text-sm font-medium text-foreground"
+                    className="block text-sm font-medium text-primary-600"
                 >
                     Passwort bestätigen
                 </label>
@@ -183,12 +185,12 @@ const RegisterForm = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
-                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                    className="mt-1 block w-full rounded-lg border-border bg-background px-4 py-2 text-foreground shadow-sm focus:outline-primary-500 focus:ring-primary-500"
                     disabled={isLoading}
                 />
-                {errors.confirmPassword && (
+                {errors?.formErrors.confirmPassword && (
                     <p className="mt-1 text-sm text-danger-500">
-                        {errors.confirmPassword}
+                        {errors.formErrors.confirmPassword}
                     </p>
                 )}
             </div>
