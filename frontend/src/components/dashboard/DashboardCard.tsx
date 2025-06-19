@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { api } from "../../lib/api";
 import type { Card } from "../../types/types";
+import ConfirmDialog from "../dialogs/ConfirmDialog";
 
+/**
+ * DashboardCardProps
+ * 
+ * @description This interface is used to define the props for the DashboardCard component.
+ * 
+ * @param id - The id of the deck
+ */
 interface DashboardCardProps {
     id: number;
     title: string;
@@ -15,6 +23,13 @@ interface DashboardCardProps {
     onEdit?: (deck: any) => void;
 }
 
+/**
+ * DashboardCard component
+ * 
+ * @description This component is used to display a deck on the dashboard.
+ * 
+ * @param props - The props for the DashboardCard component
+ */
 const DashboardCard = ({ 
     id, 
     title = '', 
@@ -30,7 +45,16 @@ const DashboardCard = ({
     const [isOpen, setIsOpen] = useState(false);
     const [loadedCards, setLoadedCards] = useState<Card[]>(cards);
     const [isLoadingCards, setIsLoadingCards] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+    /**
+     * formatDate
+     * 
+     * @description This function is used to format the date.
+     * 
+     * @param dateString - The date string to format
+     * @returns The formatted date
+     */
     const formatDate = (dateString: string) => {
         if (!dateString) return 'Unbekannt';
         try {
@@ -44,16 +68,39 @@ const DashboardCard = ({
         }
     };
 
+    /**
+     * handleDelete
+     * 
+     * @description This function is used to delete a deck.
+     * 
+     */
     const handleDelete = () => {
-        if (onDelete && confirm('Möchten Sie dieses Deck wirklich löschen?')) {
+        if (onDelete) {
             onDelete(id);
+            setIsDialogOpen(false);
         }
     };
 
+    const handleDeleteConfirm = () => {
+        setIsDialogOpen(true);
+    };
+
+    /**
+     * handleLearn
+     * 
+     * @description This function is used to navigate to the learn page.
+     * 
+     */
     const handleLearn = () => {
         window.location.href = `/learn?deckId=${id}`;
     };
 
+    /**
+     * handleEdit
+     * 
+     * @description This function is used to edit a deck.
+     * 
+     */
     const handleEdit = () => {
         if (onEdit) {
             onEdit({ id, title, description, cards: loadedCards, is_public });
@@ -62,6 +109,12 @@ const DashboardCard = ({
         }
     };
 
+    /**
+     * handleToggle
+     * 
+     * @description This function is used to toggle the expansion of the deck.
+     * 
+     */
     const handleToggle = async () => {
         if (!isOpen && loadedCards.length === 0) {
             setIsLoadingCards(true);
@@ -102,7 +155,7 @@ const DashboardCard = ({
                     
                     {/* Delete Button */}
                     <button 
-                        onClick={handleDelete}
+                        onClick={handleDeleteConfirm}
                         className="p-2 rounded-lg text-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors"
                         title="Löschen"
                     >
@@ -187,6 +240,15 @@ const DashboardCard = ({
                         Karte hinzufügen
                     </a>
                 </div>
+            )}
+            {isDialogOpen && (
+                <ConfirmDialog
+                    title="Deck löschen"
+                    message="Möchtest du dieses Deck wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+                    isOpen={isDialogOpen}
+                    onClose={() => setIsDialogOpen(false)}
+                    onContinue={handleDelete}
+                />
             )}
         </div>
     );

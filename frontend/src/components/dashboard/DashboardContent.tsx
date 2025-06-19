@@ -5,6 +5,13 @@ import DashboardCard from './DashboardCard';
 import DashboardStats from './DashboardStats';
 import DeckModal from '../modals/DeckModal';
 
+/**
+ * DashboardContent component
+ * 
+ * @description This component is used to display the dashboard content.
+ * 
+ * @returns The DashboardContent component
+ */
 const DashboardContent = () => {
     const [user, setUser] = useState<User | null>(null);
     const [decks, setDecks] = useState<Deck[]>([]);
@@ -17,6 +24,12 @@ const DashboardContent = () => {
         loadDashboardData();
     }, []);
 
+    /**
+     * loadDashboardData function
+     * 
+     * @description This function is used to load the dashboard data.
+     * 
+     */
     const loadDashboardData = async () => {
         try {
             setIsLoading(true);
@@ -39,18 +52,28 @@ const DashboardContent = () => {
         }
     };
 
+    /**
+     * Handle Delete Deck
+     * 
+     * @description This function is used to delete a deck.
+     * 
+     */
     const handleDeleteDeck = async (deckId: number) => {
-        if (confirm('Möchten Sie dieses Deck wirklich löschen?')) {
-            try {
-                await api.deleteDeck(deckId);
-                setDecks(decks.filter(deck => deck.id !== deckId));
-            } catch (err) {
-                console.error('Fehler beim Löschen des Decks:', err);
-                alert('Fehler beim Löschen des Decks');
-            }
+        try {
+            await api.deleteDeck(deckId);
+            setDecks(decks.filter(deck => deck.id !== deckId));
+        } catch (err) {
+            console.error('Fehler beim Löschen des Decks:', err);
+            alert('Fehler beim Löschen des Decks');
         }
     };
 
+    /**
+     * Handle Save Deck
+     * 
+     * @description This function is used to save a deck.
+     * 
+     */
     const handleSaveDeck = async (deck: Deck) => {
         if (editingDeck) {
             setDecks(decks.map(d => d.id === deck.id ? deck : d));
@@ -62,11 +85,23 @@ const DashboardContent = () => {
         await loadDashboardData();
     };
 
+    /**
+     * Open Create Modal
+     * 
+     * @description This function is used to open the create modal.
+     * 
+     */
     const openCreateModal = () => {
         setEditingDeck(null);
         setIsModalOpen(true);
     };
 
+    /**
+     * Open Edit Modal
+     * 
+     * @description This function is used to open the edit modal.
+     * 
+     */
     const openEditModal = async (deck: Deck) => {
         try {
             const deckWithCards = await api.getDeckWithCards(deck.id);
@@ -79,6 +114,12 @@ const DashboardContent = () => {
         }
     };
 
+    /**
+     * Close Modal
+     * 
+     * @description This function is used to close the modal.
+     * 
+     */
     const closeModal = () => {
         setIsModalOpen(false);
         setEditingDeck(null);
