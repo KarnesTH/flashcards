@@ -7,10 +7,24 @@ import { dracula } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+/**
+ * CardEditorProps
+ * 
+ * @description CardEditorProps is the props for the CardEditor component.
+ */
 interface CardEditorProps {
     deck: Deck;
 }
 
+/**
+ * CardEditor
+ * 
+ * @description CardEditor is the main component for the CardEditor.
+ * 
+ * @param deck - The deck to edit.
+ * 
+ * @returns The CardEditor component.
+ */
 const CardEditor = ({ deck }: CardEditorProps) => {
     const [cards, setCards] = useState<Card[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +40,11 @@ const CardEditor = ({ deck }: CardEditorProps) => {
         }
     }, [deck]);
 
+    /**
+     * handleSave
+     * 
+     * @description handleSave is the function that saves the cards to the database.
+     */
     const handleSave = async () => {
         setIsLoading(true);
         setError(null);
@@ -54,6 +73,11 @@ const CardEditor = ({ deck }: CardEditorProps) => {
         }
     };
 
+    /**
+     * addCard
+     * 
+     * @description addCard is the function that adds a new card to the deck.
+     */
     const addCard = () => {
         const newCard: Card = {
             id: Date.now(),
@@ -67,6 +91,11 @@ const CardEditor = ({ deck }: CardEditorProps) => {
         setActiveCardIndex(newCards.length - 1);
     };
 
+    /**
+     * removeCard
+     * 
+     * @description removeCard is the function that removes a card from the deck.
+     */
     const removeCard = (index: number) => {
         const newCards = cards.filter((_, i) => i !== index);
         setCards(newCards);
@@ -77,12 +106,22 @@ const CardEditor = ({ deck }: CardEditorProps) => {
         }
     };
 
+    /**
+     * updateCard
+     * 
+     * @description updateCard is the function that updates a card in the deck.
+     */
     const updateCard = (index: number, field: 'front' | 'back', value: string) => {
         const newCards = [...cards];
         newCards[index] = { ...newCards[index], [field]: value };
         setCards(newCards);
     };
 
+    /**
+     * activeCard
+     * 
+     * @description activeCard is the function that returns the active card.
+     */
     const activeCard = activeCardIndex !== null ? cards[activeCardIndex] : null;
 
     return (
@@ -139,7 +178,7 @@ const CardEditor = ({ deck }: CardEditorProps) => {
             {/* Editor */}
             <div className="md:col-span-2 bg-background border border-border rounded-lg overflow-hidden flex flex-col">
                 {activeCard ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border h-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px-4 bg-border h-full">
                         {/* Fronte-side Editor */}
                         <div className="bg-background p-4 flex flex-col">
                              <label className="block text-sm font-medium text-foreground mb-2">Vorderseite (Markdown)</label>
@@ -160,7 +199,7 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                         </div>
 
                         {/* Preview */}
-                        <div className="bg-background p-4 overflow-y-auto">
+                        <div className="bg-background p-4 overflow-y-auto gap-4 hidden md:block">
                             <h3 className="text-sm font-medium text-foreground mb-2">Vorschau</h3>
                             <div className="p-2 rounded-md border border-border bg-background/50 min-h-[100px]">
                                 <ReactMarkdown

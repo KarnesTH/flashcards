@@ -117,12 +117,18 @@ const DashboardCard = ({
                     {/* Learn Button */}
                     <button
                         onClick={handleLearn}
-                        className="p-2 rounded-lg text-foreground/60 hover:text-foreground hover:bg-primary-500/10 transition-colors"
+                        className="p-2 rounded-lg text-primary-500 hover:text-foreground hover:bg-primary-500/10 transition-colors"
                         title="Lernen"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M8.433 7.418c.158-.103.358-.103.516 0l3.933 2.582a.5.5 0 010 .836l-3.933 2.582a.5.5 0 01-.774-.418V7.836a.5.5 0 01.258-.418z" />
-                            <path fillRule="evenodd" d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2-1a1 1 0 00-1 1v8a1 1 0 001 1h12a1 1 0 001-1V6a1 1 0 00-1-1H4z" clipRule="evenodd" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 256 256">
+                            <rect width="256" height="256" fill="none"/>
+                            <path d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth="16"
+                            />
                         </svg>
                     </button>
 

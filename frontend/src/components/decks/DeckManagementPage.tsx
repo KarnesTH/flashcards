@@ -4,11 +4,26 @@ import { api } from '../../lib/api';
 import CardEditor from '../cards/CardEditor';
 import DeckModal from '../modals/DeckModal';
 
+/**
+ * DeckManagementPageProps
+ * 
+ * @description DeckManagementPageProps is the props for the DeckManagementPage component.
+ */
 interface DeckManagementPageProps {
     deckId: number;
     onBack: () => void;
 }
 
+/**
+ * DeckManagementPage
+ * 
+ * @description DeckManagementPage is the main component for the DeckManagementPage.
+ * 
+ * @param deckId - The id of the deck to edit.
+ * @param onBack - The function to call when the user wants to go back.
+ * 
+ * @returns The DeckManagementPage component.
+ */
 const DeckManagementPage = ({ deckId, onBack }: DeckManagementPageProps) => {
     const [deck, setDeck] = useState<Deck | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +45,13 @@ const DeckManagementPage = ({ deckId, onBack }: DeckManagementPageProps) => {
         fetchDeck();
     }, [deckId]);
 
+    /**
+     * handleDeckSave
+     * 
+     * @description handleDeckSave is the function that saves the deck to the database.
+     * 
+     * @param updatedDeck - The updated deck.
+     */
     const handleDeckSave = (updatedDeck: Deck) => {
         setDeck(prevDeck => ({ ...updatedDeck, cards: prevDeck!.cards }));
     };
