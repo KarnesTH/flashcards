@@ -41,7 +41,6 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         title: '',
         description: ''
     });
-    const [cards, setCards] = useState<Card[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -51,13 +50,11 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                 title: deck.title,
                 description: deck.description
             });
-            setCards(deck.cards || []);
         } else {
             setFormData({
                 title: '',
                 description: ''
             });
-            setCards([]);
         }
         setError(null);
     }, [deck, isOpen]);
@@ -95,33 +92,8 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
             } else {
                 savedDeck = await api.createDeck(deckData);
             }
-
-            if (deck) {
-                const existingCards = await api.getCards(savedDeck.id);
-                for (const card of existingCards) {
-                    try {
-                        await api.deleteCard(card.id);
-                    } catch (error) {
-                        console.warn('Karte konnte nicht gelöscht werden:', card.id, error);
-                    }
-                }
-            }
-
-            if (cards.length > 0) {
-                for (const card of cards) {
-                    if (card.front.trim() && card.back.trim()) {
-                        await api.createCard({
-                            deck: savedDeck.id,
-                            front: card.front,
-                            back: card.back
-                        });
-                    }
-                }
-            }
-
-            const updatedDeck = await api.getDeck(savedDeck.id);
             
-            onSave(updatedDeck);
+            onSave(savedDeck);
             onClose();
         } catch (err) {
             console.error('Fehler beim Speichern des Decks:', err);
@@ -131,54 +103,11 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
         }
     };
 
-    /**
-     * Add Card
-     * 
-     * @description This function is used to add a card to the deck.
-     * 
-     */
-    const addCard = () => {
-        const newCard: Card = {
-            id: Date.now(),
-            front: '',
-            back: '',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        };
-        setCards([...cards, newCard]);
-    };
-
-    /**
-     * Update Card
-     * 
-     * @description This function is used to update a card.
-     * 
-     * @param index - The index of the card
-     * @param field - The field to update
-     * @param value - The value to update the field with
-     */
-    const updateCard = (index: number, field: 'front' | 'back', value: string) => {
-        const updatedCards = [...cards];
-        updatedCards[index] = { ...updatedCards[index], [field]: value };
-        setCards(updatedCards);
-    };
-
-    /**
-     * Remove Card
-     * 
-     * @description This function is used to remove a card from the deck.
-     * 
-     * @param index - The index of the card
-     */
-    const removeCard = (index: number) => {
-        setCards(cards.filter((_, i) => i !== index));
-    };
-
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-background rounded-2xl shadow-xl border border-border max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-background rounded-2xl shadow-xl border border-border max-w-2xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex justify-between items-center p-6 border-b border-border">
                     <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                         {deck ? 'Deck bearbeiten' : 'Neues Deck erstellen'}
@@ -193,7 +122,7 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-120px)]">
+                <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-6">
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
@@ -230,80 +159,10 @@ const DeckModal = ({ isOpen, onClose, deck, onSave }: DeckModalProps) => {
                                 />
                             </div>
                         </div>
-
-                        {/* Karten */}
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold text-foreground">Karten</h3>
-                                <button
-                                    type="button"
-                                    onClick={addCard}
-                                    className="px-4 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-white font-medium transition-colors flex items-center gap-2"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Karte hinzufügen
-                                </button>
-                            </div>
-
-                            {cards.length === 0 ? (
-                                <div className="text-center py-8 text-foreground/60">
-                                    <p>Noch keine Karten hinzugefügt</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {cards.map((card, index) => (
-                                        <div key={index} className="border border-border rounded-lg p-4 space-y-3">
-                                            <div className="flex justify-between items-center">
-                                                <h4 className="font-medium text-foreground">Karte {index + 1}</h4>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeCard(index)}
-                                                    className="text-red-500 hover:text-red-700 transition-colors"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                <div>
-                                                    <label htmlFor="cardFront" className="block text-sm font-medium text-foreground/60 mb-1">
-                                                        Vorderseite
-                                                    </label>
-                                                    <textarea
-                                                        id="cardFront"
-                                                        value={card.front}
-                                                        onChange={(e) => updateCard(index, 'front', e.target.value)}
-                                                        rows={3}
-                                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                                                        placeholder="Frage oder Begriff..."
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label htmlFor="cardBack" className="block text-sm font-medium text-foreground/60 mb-1">
-                                                        Rückseite
-                                                    </label>
-                                                    <textarea
-                                                        id="cardBack"
-                                                        value={card.back}
-                                                        onChange={(e) => updateCard(index, 'back', e.target.value)}
-                                                        rows={3}
-                                                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                                                        placeholder="Antwort oder Definition..."
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="flex justify-end gap-3 p-6 border-t border-border">
+                    <div className="flex justify-end gap-3 p-6 border-t border-border bg-background">
                         <button
                             type="button"
                             onClick={onClose}

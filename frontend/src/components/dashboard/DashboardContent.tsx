@@ -4,6 +4,7 @@ import type { Deck, User } from '../../types/types';
 import DashboardCard from './DashboardCard';
 import DashboardStats from './DashboardStats';
 import DeckModal from '../modals/DeckModal';
+import DeckManagementPage from '../decks/DeckManagementPage';
 
 /**
  * DashboardContent component
@@ -18,11 +19,26 @@ const DashboardContent = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
+    const [viewingDeckId, setViewingDeckId] = useState<number | null>(null);
 
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const deckId = params.get('deckId');
+        if (deckId) {
+            setViewingDeckId(Number(deckId));
+        }
         loadDashboardData();
     }, []);
+
+    const updateURL = (deckId: number | null) => {
+        const url = new URL(window.location.href);
+        if (deckId) {
+            url.searchParams.set('deckId', String(deckId));
+        } else {
+            url.searchParams.delete('deckId');
+        }
+        history.pushState({}, '', url);
+    };
 
     /**
      * loadDashboardData function
@@ -77,58 +93,26 @@ const DashboardContent = () => {
      * @param deck - The deck to save
      * 
      */
-    const handleSaveDeck = async (deck: Deck) => {
-        if (editingDeck) {
-            setDecks(decks.map(d => d.id === deck.id ? deck : d));
-        } else {
-            setDecks([deck, ...decks]);
-        }
-        setEditingDeck(null);
-        
-        await loadDashboardData();
+    const handleSaveDeck = (newDeck: Deck) => {
+        setViewingDeckId(newDeck.id);
+        updateURL(newDeck.id);
+        loadDashboardData();
     };
 
-    /**
-     * Open Create Modal
-     * 
-     * @description This function is used to open the create modal.
-     * 
-     */
-    const openCreateModal = () => {
-        setEditingDeck(null);
-        setIsModalOpen(true);
+    const handleSelectDeck = (deckId: number) => {
+        setViewingDeckId(deckId);
+        updateURL(deckId);
     };
 
-    /**
-     * Open Edit Modal
-     * 
-     * @description This function is used to open the edit modal.
-     * 
-     * @param deck - The deck to edit
-     * 
-     */
-    const openEditModal = async (deck: Deck) => {
-        try {
-            const deckWithCards = await api.getDeckWithCards(deck.id);
-            setEditingDeck(deckWithCards);
-            setIsModalOpen(true);
-        } catch (error) {
-            console.error('Fehler beim Laden der Deck-Daten:', error);
-            setEditingDeck(deck);
-            setIsModalOpen(true);
-        }
+    const handleBackToDashboard = () => {
+        setViewingDeckId(null);
+        updateURL(null);
+        loadDashboardData();
     };
 
-    /**
-     * Close Modal
-     * 
-     * @description This function is used to close the modal.
-     * 
-     */
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setEditingDeck(null);
-    };
+    if (viewingDeckId) {
+        return <DeckManagementPage deckId={viewingDeckId} onBack={handleBackToDashboard} />;
+    }
 
     if (isLoading) {
         return (
@@ -175,7 +159,7 @@ const DashboardContent = () => {
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
                         <button 
-                            onClick={openCreateModal}
+                            onClick={() => setIsModalOpen(true)}
                             className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors flex items-center gap-2"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -197,7 +181,7 @@ const DashboardContent = () => {
                     <div className="text-center py-8">
                         <p className="text-foreground/60">Noch keine Decks erstellt</p>
                         <button 
-                            onClick={openCreateModal}
+                            onClick={() => setIsModalOpen(true)}
                             className="mt-4 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors inline-block"
                         >
                             Erstelle dein erstes Deck
@@ -210,7 +194,7 @@ const DashboardContent = () => {
                                 key={deck.id} 
                                 {...deck} 
                                 onDelete={handleDeleteDeck}
-                                onEdit={() => openEditModal(deck)}
+                                onEdit={handleSelectDeck}
                             />
                         ))}
                     </div>
@@ -219,8 +203,8 @@ const DashboardContent = () => {
 
             <DeckModal
                 isOpen={isModalOpen}
-                onClose={closeModal}
-                deck={editingDeck}
+                onClose={() => setIsModalOpen(false)}
+                deck={null}
                 onSave={handleSaveDeck}
             />
         </div>
