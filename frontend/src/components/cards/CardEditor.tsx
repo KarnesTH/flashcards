@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { api } from '../../lib/api';
 import type { Deck, Card, CreateCardFormData } from '../../types/types';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { dracula } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import type { Components } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import MarkdownPreview from './MarkdownPreview';
 
 /**
  * CardEditorProps
@@ -125,7 +121,7 @@ const CardEditor = ({ deck }: CardEditorProps) => {
     const activeCard = activeCardIndex !== null ? cards[activeCardIndex] : null;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-full mb-6">
             {/* Card List */}
             <div className="md:col-span-1 bg-background border border-border rounded-lg p-4 flex flex-col">
                 <div className="flex justify-between items-center mb-4">
@@ -145,7 +141,7 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                         >
                             <div className="flex justify-between items-start">
                                 <p className="font-medium text-foreground truncate pr-2">
-                                    {card.front.split('\n')[0] || `Karte ${index + 1}`}
+                                    {card.front.split('\n')[0].replace(/^#+ /, '') || `Karte ${index + 1}`}
                                 </p>
                                 <button
                                     onClick={(e) => {
@@ -154,12 +150,11 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                                     }}
                                     className="text-foreground/50 hover:text-red-500 transition-colors flex-shrink-0"
                                 >
-                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4 md:size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
                                 </button>
                             </div>
-                            <p className="text-sm text-foreground/60 truncate">
-                                {card.back.split('\n')[0] || 'Keine Rückseite'}
-                            </p>
                         </div>
                     ))}
                 </div>
@@ -176,62 +171,65 @@ const CardEditor = ({ deck }: CardEditorProps) => {
             </div>
 
             {/* Editor */}
-            <div className="md:col-span-2 bg-background border border-border rounded-lg overflow-hidden flex flex-col">
+            <div className="md:col-span-2 space-y-6">
                 {activeCard ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px-4 bg-border h-full">
-                        {/* Fronte-side Editor */}
-                        <div className="bg-background p-4 flex flex-col">
-                             <label className="block text-sm font-medium text-foreground mb-2">Vorderseite (Markdown)</label>
-                             <textarea
-                                value={activeCard.front}
-                                onChange={(e) => updateCard(activeCardIndex!, 'front', e.target.value)}
-                                className="w-full flex-grow p-2 rounded-md border border-border bg-background/50 resize-none font-mono text-sm"
-                                placeholder="## Frage im Markdown-Format..."
-                            />
-                             <label className="block text-sm font-medium text-foreground mt-4 mb-2">Rückseite</label>
-                             <textarea
-                                value={activeCard.back}
-                                onChange={(e) => updateCard(activeCardIndex!, 'back', e.target.value)}
-                                className="w-full p-2 rounded-md border border-border bg-background/50 resize-none font-mono text-sm"
-                                placeholder="Antwort..."
-                                rows={5}
-                            />
-                        </div>
-
-                        {/* Preview */}
-                        <div className="bg-background p-4 overflow-y-auto gap-4 hidden md:block">
-                            <h3 className="text-sm font-medium text-foreground mb-2">Vorschau</h3>
-                            <div className="p-2 rounded-md border border-border bg-background/50 min-h-[100px]">
-                                <ReactMarkdown
-                                    children={activeCard.front}
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                        code: ({ className, children, ...props }) => {
-                                            const match = /language-(\w+)/.exec(className || '');
-                                            const isInline = !match;
-                                            return !isInline ? (
-                                                <SyntaxHighlighter
-                                                    style={dracula}
-                                                    language={match[1]}
-                                                    PreTag="div"
-                                                >
-                                                    {String(children).replace(/\n$/, '')}
-                                                </SyntaxHighlighter>
-                                            ) : (
-                                                <code className={className} {...props}>
-                                                    {children}
-                                                </code>
-                                            );
-                                        }
-                                    } as Components}
+                    <>
+                        {/* Front side of the card */}
+                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                            <div className="px-6 py-3">
+                                <h3 
+                                    className="text-lg font-semibold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
                                 >
-                                </ReactMarkdown>
+                                    Vorderseite (Frage)
+                                </h3>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <textarea
+                                    value={activeCard.front}
+                                    onChange={(e) => updateCard(activeCardIndex!, 'front', e.target.value)}
+                                    className="w-full p-4 rounded-lg border border-gray-300 bg-gray-50 resize-none font-mono text-sm min-h-[120px] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="## Frage im Markdown-Format..."
+                                />
+                                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 prose">
+                                    <h4 className="text-sm font-medium text-gray-600 mb-3">Vorschau:</h4>
+                                    <MarkdownPreview markdown={activeCard.front} />
+                                </div>
                             </div>
                         </div>
-                    </div>
+
+                        {/* Back side of the card */}
+                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                            <div className="px-6 py-3">
+                                <h3 
+                                    className="text-lg font-semibold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
+                                >
+                                    Rückseite (Antwort)
+                                </h3>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <textarea
+                                    value={activeCard.back}
+                                    onChange={(e) => updateCard(activeCardIndex!, 'back', e.target.value)}
+                                    className="w-full p-4 rounded-lg border border-gray-300 bg-gray-50 resize-none font-mono text-sm min-h-[120px] focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    placeholder="Antwort..."
+                                />
+                                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                                    <h4 className="text-sm font-medium text-gray-600 mb-3">Vorschau:</h4>
+                                    <div className="text-gray-800">
+                                        {activeCard.back || <span className="text-gray-400 italic">Keine Antwort eingegeben</span>}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-foreground/60">
-                        <p>Wähle eine Karte aus oder erstelle eine neue.</p>
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+                        <div className="text-gray-400 mb-4">
+                            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <p className="text-gray-600 text-lg">Wähle eine Karte aus oder erstelle eine neue.</p>
                     </div>
                 )}
             </div>

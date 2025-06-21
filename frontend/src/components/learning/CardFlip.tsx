@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Card } from '../../types/types';
+import MarkdownPreview from '../cards/MarkdownPreview';
 
 /**
  * CardFlipProps interface
@@ -118,8 +119,8 @@ const CardFlip = ({
                 <div className="w-full bg-background border-2 border-primary-500 rounded-2xl p-8 shadow-lg">
                     <div className="text-center mb-6">
                         <h3 className="text-lg font-medium text-foreground/60 mb-4">Frage</h3>
-                        <div className="text-xl text-foreground leading-relaxed">
-                            {card.front}
+                        <div className="text-xl text-foreground leading-relaxed prose">
+                            <MarkdownPreview markdown={card.front} />
                         </div>
                     </div>
 
