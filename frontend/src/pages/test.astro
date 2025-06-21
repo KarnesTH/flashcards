@@ -1,0 +1,11 @@
+---
+import Editor from "../components/editor/Editor";
+import Layout from "../layouts/Layout.astro";
+
+const text: string = "Hello, world!";
+
+---
+
+<Layout title="Test">
+    <Editor text={text} client:load />
+</Layout>
