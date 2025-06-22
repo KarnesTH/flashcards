@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import type { Deck, Card, CreateCardFormData } from '../../types/types';
 import MarkdownPreview from './MarkdownPreview';
+import Editor from '../editor/Editor';
 
 /**
  * CardEditorProps
@@ -26,6 +27,9 @@ const CardEditor = ({ deck }: CardEditorProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null);
+    const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
+    const [editingCardIndex, setEditingCardIndex] = useState<number | null>(null);
+    const [editingCardType, setEditingCardType] = useState<'front' | 'back'>('front');
 
     useEffect(() => {
         setCards(deck.cards || []);
@@ -114,6 +118,40 @@ const CardEditor = ({ deck }: CardEditorProps) => {
     };
 
     /**
+     * openEditor
+     * 
+     * @description openEditor is the function that opens the editor modal.
+     */
+    const openEditor = (cardIndex: number, cardType: 'front' | 'back') => {
+        setEditingCardIndex(cardIndex);
+        setEditingCardType(cardType);
+        setIsEditorModalOpen(true);
+    };
+
+    /**
+     * closeEditor
+     * 
+     * @description closeEditor is the function that closes the editor modal.
+     */
+    const closeEditor = () => {
+        setIsEditorModalOpen(false);
+        setEditingCardIndex(null);
+        setEditingCardType('front');
+    };
+
+    /**
+     * handleEditorSave
+     * 
+     * @description handleEditorSave is the function that saves the edited card.
+     */
+    const handleEditorSave = (text: string) => {
+        if (editingCardIndex !== null) {
+            updateCard(editingCardIndex, editingCardType, text);
+        }
+        closeEditor();
+    };
+
+    /**
      * activeCard
      * 
      * @description activeCard is the function that returns the active card.
@@ -170,58 +208,52 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                 </div>
             </div>
 
-            {/* Editor */}
-            <div className="md:col-span-2 space-y-6">
+            {/* Card Preview */}
+            <div className="md:col-span-2">
                 {activeCard ? (
-                    <>
-                        {/* Front side of the card */}
-                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                            <div className="px-6 py-3">
-                                <h3 
-                                    className="text-lg font-semibold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
-                                >
-                                    Vorderseite (Frage)
+                    <div className="space-y-6">
+                        {/* Front Card */}
+                        <div className="preview-card rounded-xl overflow-hidden relative group">
+                            <button
+                                onClick={() => openEditor(activeCardIndex!, 'front')}
+                                className="absolute top-4 -right-4 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-lg z-10"
+                                title="Frage bearbeiten"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 text-primary-500">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                </svg>
+                            </button>
+                            <div className="flex flex-col gap-4 justify-center items-center min-h-72 h-80">
+                                <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                                    Frage
                                 </h3>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <textarea
-                                    value={activeCard.front}
-                                    onChange={(e) => updateCard(activeCardIndex!, 'front', e.target.value)}
-                                    className="w-full p-4 rounded-lg border border-gray-300 bg-gray-50 resize-none font-mono text-sm min-h-[120px] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="## Frage im Markdown-Format..."
-                                />
-                                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 prose">
-                                    <h4 className="text-sm font-medium text-gray-600 mb-3">Vorschau:</h4>
+                                <div className="prose max-w-none">
                                     <MarkdownPreview markdown={activeCard.front} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Back side of the card */}
-                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                            <div className="px-6 py-3">
-                                <h3 
-                                    className="text-lg font-semibold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent"
-                                >
-                                    Rückseite (Antwort)
+                        {/* Back Card */}
+                        <div className="preview-card rounded-xl overflow-hidden relative group">
+                            <button
+                                onClick={() => openEditor(activeCardIndex!, 'back')}
+                                className="absolute top-4 -right-4 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-lg z-10"
+                                title="Antwort bearbeiten"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 text-primary-500">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                </svg>
+                            </button>
+                            <div className="flex flex-col gap-4 justify-center items-center min-h-72 h-80">
+                                <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                                    Antwort
                                 </h3>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <textarea
-                                    value={activeCard.back}
-                                    onChange={(e) => updateCard(activeCardIndex!, 'back', e.target.value)}
-                                    className="w-full p-4 rounded-lg border border-gray-300 bg-gray-50 resize-none font-mono text-sm min-h-[120px] focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    placeholder="Antwort..."
-                                />
-                                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                                    <h4 className="text-sm font-medium text-gray-600 mb-3">Vorschau:</h4>
-                                    <div className="text-gray-800">
-                                        {activeCard.back || <span className="text-gray-400 italic">Keine Antwort eingegeben</span>}
-                                    </div>
+                                <div className="prose max-w-none">
+                                    <MarkdownPreview markdown={activeCard.back} />
                                 </div>
                             </div>
                         </div>
-                    </>
+                    </div>
                 ) : (
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
                         <div className="text-gray-400 mb-4">
@@ -233,6 +265,32 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                     </div>
                 )}
             </div>
+
+            {/* Editor Modal */}
+            {isEditorModalOpen && editingCardIndex !== null && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-background rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+                        <div className="flex justify-between items-center p-6 border-b border-border">
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                                {editingCardType === 'front' ? 'Frage bearbeiten' : 'Antwort bearbeiten'}
+                            </h2>
+                            <button
+                                onClick={closeEditor}
+                                className="px-4 py-2 bg-foreground/10 text-foreground rounded-lg hover:bg-foreground/20 transition-colors"
+                            >
+                                Schließen
+                            </button>
+                        </div>
+                        <div className="flex-1 p-6 overflow-hidden">
+                            <Editor
+                                text={editingCardIndex !== null ? (editingCardType === 'front' ? cards[editingCardIndex].front : cards[editingCardIndex].back) : ''}
+                                cardType={editingCardType}
+                                onSave={handleEditorSave}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MarkdownPreview from "../cards/MarkdownPreview";
 
 /**
@@ -9,6 +9,7 @@ import MarkdownPreview from "../cards/MarkdownPreview";
 interface EditorProps {
     text: string;
     cardType: 'front' | 'back';
+    onSave?: (text: string) => void;
 }
 
 /**
@@ -18,10 +19,11 @@ interface EditorProps {
  * 
  * @param text - The text to be edited.
  * @param cardType - The type of card to be edited.
+ * @param onSave - Callback function to save the edited text.
  * 
  * @returns The Editor component.
  */
-const Editor = ({ text, cardType }: EditorProps) => {
+const Editor = ({ text, cardType, onSave }: EditorProps) => {
     const [markdown, setMarkdown] = useState(text);
 
     /**
@@ -34,6 +36,17 @@ const Editor = ({ text, cardType }: EditorProps) => {
     const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMarkdown(e.target.value);
     }
+
+    /**
+     * handleSave
+     * 
+     * @description handleSave is the function to save the markdown.
+     */
+    const handleSave = () => {
+        if (onSave) {
+            onSave(markdown);
+        }
+    };
 
     /**
      * getCursorLine
@@ -137,9 +150,14 @@ const Editor = ({ text, cardType }: EditorProps) => {
         setMarkdown(newLines.join('\n'));
     }
 
+    // Update markdown when text prop changes
+    useEffect(() => {
+        setMarkdown(text);
+    }, [text]);
+
     return (
-        <div className="flex flex-col md:flex-row gap-4 w-full p-4 border border-border shadow-2xl shadow-foreground/10 rounded-md justify-center items-center h-calc(100vh - 10rem)">
-            <div className="border border-border rounded-md w-full p-4">
+        <div className="flex flex-col md:flex-row gap-4 w-full p-4 border border-border shadow-2xl shadow-foreground/10 rounded-md justify-center items-center max-h-screen h-full">
+            <div className="border border-border rounded-md w-full p-4 h-full">
                 <div className="flex gap-2 w-full mb-4 border-b flex-wrap border-border pb-4">
                     <button 
                         className="bg-transparent text-primary-500 border border-primary-500 p-2 rounded-md hover:bg-primary-500/10 hover:text-foreground transition-colors" 
@@ -229,16 +247,30 @@ const Editor = ({ text, cardType }: EditorProps) => {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" />
                         </svg>
                     </button>
+
+                    <div className="border-r-2 border-border" />
+
+                    {onSave && (
+                        <button 
+                            className="bg-primary-500 text-foreground border border-primary-500 p-2 rounded-md hover:bg-primary-600 transition-colors" 
+                            onClick={handleSave}
+                            title="Speichern"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
                 <div className="flex flex-col">
                     <label htmlFor="markdown" className="sr-only">Text Editor</label>
-                    <textarea className="w-full h-[calc(100vh-20rem)] resize-none focus:outline-primary-500 border border-border rounded-md p-2" id="markdown" value={markdown} onChange={handleMarkdownChange} />
+                    <textarea className="w-full h-80 resize-none focus:outline-primary-500 border border-border rounded-md p-2" id="markdown" value={markdown} onChange={handleMarkdownChange} />
                 </div>
             </div>
             <div className="preview-card rounded-md w-full p-4">
                 <div className="flex flex-col gap-4 justify-center items-center">
                     <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">{cardType === 'front' ? 'Frage' : 'Antwort'}</h3>
-                    <div className="prose p-6 w-full h-full min-h-72">
+                    <div className="prose p-6 text-center w-full h-full min-h-72">
                         <MarkdownPreview markdown={markdown} />
                     </div>
                 </div>
