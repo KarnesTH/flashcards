@@ -252,7 +252,7 @@ const Editor = ({ text, cardType, onSave }: EditorProps) => {
 
                     {onSave && (
                         <button 
-                            className="bg-primary-500 text-foreground border border-primary-500 p-2 rounded-md hover:bg-primary-600 transition-colors" 
+                            className="bg-primary-500 text-foreground/50 border border-primary-500 p-2 rounded-md hover:bg-primary-600 transition-colors" 
                             onClick={handleSave}
                             title="Speichern"
                         >
