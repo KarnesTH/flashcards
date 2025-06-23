@@ -1,4 +1,4 @@
-import type { User, Deck, Card, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData } from '../types/types';
+import type { User, Deck, Card, LearningSession, CardReview, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData } from '../types/types';
 import { ApiError } from '../types/errors';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
@@ -405,6 +405,19 @@ class Api {
     }
 
     /**
+     * Get cards for a learning session
+     * 
+     * @description This function is used to get the cards for a learning session.
+     * 
+     * @param sessionId - The ID of the session
+     * 
+     * @returns The response from the API
+     */
+    async getCardsForSession(sessionId: number): Promise<Card[]> {
+        return this.request(`/learning-sessions/${sessionId}/cards/`);
+    }
+
+    /**
      * Create a learning session
      * 
      * @description This function is used to create a learning session.
@@ -413,7 +426,7 @@ class Api {
      * 
      * @returns The response from the API
      */
-    async createLearningSession(deckId: number): Promise<any> {
+    async createLearningSession(deckId: number): Promise<LearningSession> {
         return this.request('/learning-sessions/', {
             method: 'POST',
             body: JSON.stringify({ deck_id: deckId }),
@@ -431,7 +444,7 @@ class Api {
      * 
      * @returns The response from the API
      */
-    async updateLearningSession(sessionId: number, status: string, endedAt?: string): Promise<any> {
+    async updateLearningSession(sessionId: number, status: string, endedAt?: string): Promise<LearningSession> {
         const data: any = { status };
         if (endedAt) {
             data.ended_at = endedAt;
@@ -452,7 +465,7 @@ class Api {
      * 
      * @returns The response from the API
      */
-    async completeLearningSession(sessionId: number): Promise<any> {
+    async completeLearningSession(sessionId: number): Promise<LearningSession> {
         return this.request(`/learning-sessions/${sessionId}/complete/`, {
             method: 'POST',
         });
@@ -466,7 +479,6 @@ class Api {
      * @param sessionId - The ID of the session
      * @param cardId - The ID of the card
      * @param isCorrect - Whether the card was correct
-     * @param difficultyRating - The difficulty rating of the card
      * @param timeTaken - The time taken to answer the card
      * 
      * @returns The response from the API
@@ -475,9 +487,8 @@ class Api {
         sessionId: number, 
         cardId: number, 
         isCorrect: boolean, 
-        difficultyRating?: number, 
         timeTaken?: number
-    ): Promise<any> {
+    ): Promise<CardReview> {
         const data: any = {
             session_id: sessionId,
             card_id: cardId,

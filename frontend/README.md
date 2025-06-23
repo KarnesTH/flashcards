@@ -1,48 +1,63 @@
-# Astro Starter Kit: Basics
+# Flashcards Frontend
 
-```sh
-yarn create astro@latest -- --template basics
-```
+A modern and responsive frontend for the Flashcards application, built with Astro, React, and Tailwind CSS. It provides a rich user interface for managing decks, learning cards, and tracking progress.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+## 🚀 Core Features
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+- **Interactive Dashboard**
+  - At-a-glance user statistics (accuracy, cards reviewed, etc.).
+  - Quick access to recent and popular decks.
+  - Visualization of learning progress.
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+- **Intelligent Learning Sessions**
+  - Interactive card-flipping interface powered by the backend's Spaced Repetition System (SRS).
+  - Real-time feedback on answers.
+  - Time tracking per card to influence the SRS algorithm.
 
-## 🚀 Project Structure
+- **Full Deck & Card Management**
+  - Create, read, update, and delete decks and cards.
+  - Browse public decks from other users.
+  - Seamlessly add new cards to any owned deck.
 
-Inside of your Astro project, you'll see the following folders and files:
+- **Markdown & Code Support**
+  - Renders card fronts and backs using Markdown.
+  - Supports syntax highlighting for code blocks in various languages.
+
+- **User Profile Management**
+  - Edit user information (bio, name, etc.).
+  - Upload and manage a custom user avatar.
+
+## 🏗️ Project Structure
+
+The project uses a standard Astro project structure, separating pages, layouts, and components for a clean architecture.
 
 ```text
 /
-├── public/
-│   └── favicon.svg
+├── public/              # Static assets
 ├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
+│   ├── components/      # Reusable React components (.tsx)
+│   ├── layouts/         # Astro layouts for page structure
+│   ├── lib/             # Core logic (e.g., api.ts)
+│   ├── pages/           # Site pages and API endpoints (.astro)
+│   └── types/           # TypeScript definitions
 └── package.json
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
 ## 🧞 Commands
 
-All commands are run from the root of the project, from a terminal:
+All commands are run from the root of the `/frontend` directory from a terminal:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `yarn install`             | Installs dependencies                            |
-| `yarn dev`             | Starts local dev server at `localhost:4321`      |
-| `yarn build`           | Build your production site to `./dist/`          |
-| `yarn preview`         | Preview your build locally, before deploying     |
-| `yarn astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `yarn astro -- --help` | Get help using the Astro CLI                     |
+| Command          | Action                                           |
+| :--------------- | :----------------------------------------------- |
+| `yarn install`   | Installs dependencies                            |
+| `yarn dev`       | Starts the local dev server at `localhost:4321`  |
+| `yarn build`     | Builds the production site to `./dist/`          |
+| `yarn preview`   | Previews the production build locally            |
 
-## 👀 Want to learn more?
+## 🛠️ Technology Stack
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- **Framework**: Astro
+- **UI Library**: React
+- **Styling**: Tailwind CSS
+- **API Communication**: Fetch API via a typed API client
+- **Typing**: TypeScript

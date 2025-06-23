@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
-import type { Deck, LearningSession as LearningSessionType } from '../../types/types';
+import type { Deck, LearningSession as LearningSessionType, Card } from '../../types/types';
 import CardFlip from './CardFlip';
 
 /**
@@ -13,6 +13,7 @@ import CardFlip from './CardFlip';
 const LearningSession = () => {
     const [deckId, setDeckId] = useState<string | null>(null);
     const [deck, setDeck] = useState<Deck | null>(null);
+    const [cards, setCards] = useState<Card[]>([]);
     const [session, setSession] = useState<LearningSessionType | null>(null);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -50,13 +51,20 @@ const LearningSession = () => {
             setIsLoading(true);
             setError(null);
             
-            const deckData = await api.getDeckWithCards(parseInt(deckIdParam));
+            const deckData = await api.getDeck(parseInt(deckIdParam));
             setDeck(deckData);
 
             const sessionData = await api.createLearningSession(parseInt(deckIdParam));
             setSession(sessionData);
 
-            setSessionStats(prev => ({ ...prev, total: deckData.cards?.length || 0 }));
+            const cardsForSession = await api.getCardsForSession(sessionData.id);
+            setCards(cardsForSession);
+
+            if (cardsForSession.length === 0) {
+                setError('Keine Karten zum Lernen fällig. Komm später wieder!');
+            }
+
+            setSessionStats(prev => ({ ...prev, total: cardsForSession.length }));
 
         } catch (err) {
             console.error('Fehler beim Initialisieren der Lernsession:', err);
@@ -75,16 +83,15 @@ const LearningSession = () => {
      * @param timeTaken - The time taken to answer the question
      */
     const handleCardAnswer = async (isCorrect: boolean, timeTaken?: number) => {
-        if (!session || !deck || !deck.cards) return;
+        if (!session || !cards || cards.length === 0) return;
 
         try {
-            const currentCard = deck.cards[currentCardIndex];
+            const currentCard = cards[currentCardIndex];
             
             await api.createCardReview(
                 session.id,
                 currentCard.id,
                 isCorrect,
-                undefined,
                 timeTaken
             );
 
@@ -94,20 +101,20 @@ const LearningSession = () => {
                 incorrect: prev.incorrect + (isCorrect ? 0 : 1)
             }));
 
-            if (currentCardIndex < deck.cards.length - 1) {
+            if (currentCardIndex < cards.length - 1) {
                 setCurrentCardIndex(prev => prev + 1);
             } else {
-                await api.updateLearningSession(session.id, 'completed', new Date().toISOString());
+                await api.completeLearningSession(session.id);
                 setIsCompleted(true);
             }
 
         } catch (err) {
             console.error('Fehler beim Speichern der Antwort:', err);
-            if (currentCardIndex < (deck?.cards?.length || 0) - 1) {
+            if (currentCardIndex < (cards?.length || 0) - 1) {
                 setCurrentCardIndex(prev => prev + 1);
             } else {
                 try {
-                    await api.updateLearningSession(session.id, 'completed', new Date().toISOString());
+                    await api.completeLearningSession(session.id);
                 } catch (sessionError) {
                     console.error('Fehler beim Beenden der Session:', sessionError);
                 }
@@ -228,10 +235,10 @@ const LearningSession = () => {
         );
     }
 
-    if (!deck || !session || !deck.cards || deck.cards.length === 0) {
+    if (!deck || !session || cards.length === 0) {
         return (
             <div className="text-center py-16">
-                <p className="text-foreground/60 mb-4">Keine Karten in diesem Deck gefunden</p>
+                <p className="text-foreground/60 mb-4">{isLoading ? 'Lade Session...' : error || 'Keine Karten in diesem Deck zum Lernen fällig.'}</p>
                 <button 
                     onClick={handleBackToDashboard}
                     className="px-6 py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors"
@@ -242,7 +249,7 @@ const LearningSession = () => {
         );
     }
 
-    const currentCard = deck.cards[currentCardIndex];
+    const currentCard = cards[currentCardIndex];
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -277,9 +284,9 @@ const LearningSession = () => {
                 onNext={handleCardAnswer}
                 onPrevious={handlePrevious}
                 isFirst={currentCardIndex === 0}
-                isLast={currentCardIndex === deck.cards.length - 1}
+                isLast={currentCardIndex === cards.length - 1}
                 currentIndex={currentCardIndex}
-                totalCards={deck.cards.length}
+                totalCards={cards.length}
             />
         </div>
     );

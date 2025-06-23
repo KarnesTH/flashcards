@@ -1,5 +1,5 @@
 from datetime import timedelta
-from django.db.models import F, Q
+from django.db.models import F, Q, FloatField
 from django.db.models.expressions import ExpressionWrapper
 from django.db.models.fields import DurationField
 from django.db.models.functions import Coalesce
@@ -27,7 +27,10 @@ def get_cards_for_review(deck: Deck, limit: int = 20) -> list[Card]:
         )
         .annotate(
             weight=(
-                (F("days_overdue") / timedelta(days=1)) * 1.5
+                ExpressionWrapper(
+                    F("days_overdue") / timedelta(days=1), output_field=FloatField()
+                )
+                * 1.5
                 + (1.0 / (F("repetition_count") + 0.5)) * 1.0
                 + F("average_review_time") * 0.1
             )
