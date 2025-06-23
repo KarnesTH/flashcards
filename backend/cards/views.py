@@ -8,6 +8,7 @@ import os
 from django.conf import settings
 
 from .models import Card, CardReview, Deck, LearningSession, User
+from .srs import evaluate_review, get_cards_for_review
 from .serializers import (
     CardReviewSerializer,
     CardSerializer,
@@ -201,6 +202,21 @@ class LearningSessionViewSet(viewsets.ModelViewSet):
             )
         serializer.save(user=self.request.user)
 
+    @action(detail=True, methods=['get'])
+    def cards(self, request, pk=None):
+        """
+        Get the list of cards for a learning session.
+        Uses the SRS algorithm to select and order cards.
+        """
+        session = self.get_object()
+        if session.status != 'active':
+            return Response({'error': 'Diese Lernsession ist nicht aktiv.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        cards_for_review = get_cards_for_review(session.deck, limit=20)
+        
+        serializer = CardSerializer(cards_for_review, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
         session = self.get_object()
@@ -231,5 +247,11 @@ class CardReviewViewSet(viewsets.ModelViewSet):
             raise permissions.PermissionDenied(
                 "Du bist nicht der Besitzer dieser Session."
             )
-        serializer.save()
+        
+        review = serializer.save()
+        evaluate_review(
+            card=review.card,
+            is_correct=review.is_correct,
+            taken_time=float(review.time_taken)
+        )
     

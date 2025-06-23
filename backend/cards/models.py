@@ -156,6 +156,17 @@ class Card(models.Model):
     )
     front = models.TextField()
     back = models.TextField()
+
+    interval = models.IntegerField(default=0)
+    ease_factor = models.FloatField(default=2.5)
+    repetition_count = models.IntegerField(default=0)
+    last_reviewed = models.DateTimeField(null=True, blank=True)
+    next_review = models.DateTimeField(null=True, blank=True)
+    total_review_time = models.IntegerField(default=0)
+    average_review_time = models.IntegerField(default=0)
+    correct_count = models.IntegerField(default=0)
+    incorrect_count = models.IntegerField(default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
