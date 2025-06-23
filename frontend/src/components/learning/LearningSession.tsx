@@ -184,37 +184,41 @@ const LearningSession = () => {
         const accuracy = sessionStats.total > 0 ? (sessionStats.correct / sessionStats.total) * 100 : 0;
         
         return (
-            <div className="max-w-2xl mx-auto text-center">
-                <div className="bg-background rounded-2xl shadow-lg border border-border p-8 mb-6">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-6">
+            <div className="max-w-2xl mx-auto text-center py-8">
+                <div className="border border-border rounded-xl shadow-2xl shadow-foreground/10 bg-background p-8 md:p-12">
+                    <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent mb-6">
                         Lernsession abgeschlossen!
                     </h1>
                     
-                    <div className="grid grid-cols-3 gap-6 mb-8">
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-green-500">{sessionStats.correct}</div>
-                            <div className="text-sm text-foreground/60">Richtig</div>
+                    <p className="text-foreground/70 mb-8 text-lg">
+                        Super gemacht! Hier ist deine Zusammenfassung:
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        <div className="bg-background/50 rounded-xl p-6">
+                            <div className="text-4xl font-bold text-green-500">{sessionStats.correct}</div>
+                            <div className="text-sm text-foreground/60 mt-2">Richtig</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-red-500">{sessionStats.incorrect}</div>
-                            <div className="text-sm text-foreground/60">Falsch</div>
+                        <div className="bg-background/50 rounded-xl p-6">
+                            <div className="text-4xl font-bold text-red-500">{sessionStats.incorrect}</div>
+                            <div className="text-sm text-foreground/60 mt-2">Falsch</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-primary-500">{Math.round(accuracy)}%</div>
-                            <div className="text-sm text-foreground/60">Genauigkeit</div>
+                        <div className="bg-background/50 rounded-xl p-6">
+                            <div className="text-4xl font-bold text-primary-500">{Math.round(accuracy)}%</div>
+                            <div className="text-sm text-foreground/60 mt-2">Genauigkeit</div>
                         </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-w-sm mx-auto">
                         <button 
                             onClick={handleBackToDashboard}
-                            className="w-full px-6 py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors"
+                            className="w-full px-6 py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors shadow-lg shadow-primary-500/20"
                         >
                             Zurück zum Dashboard
                         </button>
                         <button 
                             onClick={() => window.location.reload()}
-                            className="w-full px-6 py-3 rounded-lg bg-background border border-border text-foreground hover:bg-primary-500/10 font-medium transition-colors"
+                            className="w-full px-6 py-3 rounded-lg bg-background/80 border border-border text-foreground hover:bg-primary-500/10 font-medium transition-colors"
                         >
                             Nochmal lernen
                         </button>

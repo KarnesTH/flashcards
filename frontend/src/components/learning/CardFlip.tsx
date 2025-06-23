@@ -45,12 +45,14 @@ const CardFlip = ({
     const [showAnswer, setShowAnswer] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
     const [startTime, setStartTime] = useState<number>(Date.now());
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     useEffect(() => {
         setUserAnswer('');
         setShowAnswer(false);
         setIsCorrect(false);
         setStartTime(Date.now());
+        setIsTransitioning(false);
     }, [card.id]);
 
     /**
@@ -71,14 +73,40 @@ const CardFlip = ({
     };
 
     /**
-     * Handle Confirm Answer
+     * handleNext
      * 
-     * @description This function is used to confirm the user's answer.
-     * 
+     * @description This function is used to handle the next card.
      */
-    const handleConfirmAnswer = () => {
+    const handleNext = () => {
+        if (isTransitioning) return;
+        setIsTransitioning(true);
+
         const timeTaken = Date.now() - startTime;
-        onNext(isCorrect, timeTaken);
+        
+        setShowAnswer(false);
+
+        setTimeout(() => {
+            onNext(isCorrect, timeTaken);
+        }, 700);
+    };
+
+    /**
+     * handlePrevious
+     * 
+     * @description This function is used to handle the previous card.
+     */
+    const handlePrevious = () => {
+        if (isTransitioning) return;
+
+        if (showAnswer) {
+            setIsTransitioning(true);
+            setShowAnswer(false);
+            setTimeout(() => {
+                onPrevious();
+            }, 700);
+        } else {
+            onPrevious();
+        }
     };
 
     /**
@@ -89,7 +117,8 @@ const CardFlip = ({
      * @param e - The keyboard event
      */
     const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !showAnswer) {
+        if (e.key === 'Enter' && !e.shiftKey && !showAnswer) {
+            e.preventDefault();
             handleSubmitAnswer();
         }
     };
@@ -97,135 +126,130 @@ const CardFlip = ({
     return (
         <div className="max-w-2xl mx-auto">
             {/* Progress Bar */}
-            <div className="mb-6">
+            <div className="mb-8">
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-foreground/60">
                         Karte {currentIndex + 1} von {totalCards}
                     </span>
                     <span className="text-sm text-foreground/60">
-                        {Math.round(((currentIndex + 1) / totalCards) * 100)}%
+                        {Math.round(((currentIndex) / totalCards) * 100)}% abgeschlossen
                     </span>
                 </div>
-                <div className="w-full bg-border rounded-full h-2">
+                <div className="w-full bg-border rounded-full h-2 overflow-hidden">
                     <div 
-                        className="bg-primary-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${((currentIndex + 1) / totalCards) * 100}%` }}
+                        className="bg-primary-500 h-2 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${(currentIndex / totalCards) * 100}%` }}
                     ></div>
                 </div>
             </div>
 
-            {/* Question Card */}
-            <div className="mb-8">
-                <div className="w-full bg-background border-2 border-primary-500 rounded-2xl p-8 shadow-lg">
-                    <div className="text-center mb-6">
-                        <h3 className="text-lg font-medium text-foreground/60 mb-4">Frage</h3>
-                        <div className="text-xl text-foreground leading-relaxed prose">
-                            <MarkdownPreview markdown={card.front} />
+             {/* Flipper */}
+             <div className="[perspective:1000px] w-full h-96 mb-8">
+                <div 
+                    className={`relative w-full h-full transition-transform duration-700 ease-in-out [transform-style:preserve-3d] ${showAnswer ? '[transform:rotateY(180deg)]' : ''}`}
+                >
+                    {/* Front Card (Question) */}
+                    <div className="absolute w-full h-full [backface-visibility:hidden]">
+                        <div className="preview-card w-full h-full flex flex-col justify-center items-center p-8">
+                             <div className="text-center">
+                                <h3 className="text-lg font-medium text-foreground/60 mb-4">Frage</h3>
+                                <div className="text-xl text-foreground leading-relaxed prose max-w-none">
+                                    <MarkdownPreview markdown={card.front} />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {!showAnswer ? (
-                        <div className="space-y-4">
-                            <div>
-                                <label htmlFor="userAnswer" className="block text-sm font-medium text-foreground mb-2">
-                                    Deine Antwort:
-                                </label>
-                                <textarea
-                                    id="userAnswer"
-                                    value={userAnswer}
-                                    onChange={(e) => setUserAnswer(e.target.value)}
-                                    onKeyPress={handleKeyPress}
-                                    placeholder="Gib deine Antwort hier ein..."
-                                    className="w-full p-4 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                                    rows={4}
-                                    autoFocus
-                                />
-                            </div>
-                            <button
-                                onClick={handleSubmitAnswer}
-                                disabled={!userAnswer.trim()}
-                                className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
-                                    userAnswer.trim()
-                                        ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                                        : 'bg-background border border-border text-foreground/40 cursor-not-allowed'
-                                }`}
-                            >
-                                Antwort überprüfen
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            {/* User's Answer */}
-                            <div>
-                                <h4 className="text-sm font-medium text-foreground/60 mb-2">Deine Antwort:</h4>
-                                <div className={`p-4 rounded-lg border-2 ${
-                                    isCorrect 
-                                        ? 'border-green-500 bg-green-500/10' 
-                                        : 'border-red-500 bg-red-500/10'
-                                }`}>
-                                    <p className="text-foreground">{userAnswer}</p>
+                    {/* Back Card (Answer) */}
+                    <div className="absolute w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                        <div className={`preview-card w-full h-full flex flex-col justify-center items-center p-6 border-2 ${isCorrect ? 'border-green-500/50' : 'border-red-500/50'}`}>
+                            <div className="space-y-4 text-center w-full">
+                                <div>
+                                    <h4 className="text-sm font-medium text-foreground/60 mb-2">Deine Antwort:</h4>
+                                    <p className={`font-medium text-lg px-4 ${isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                                        {userAnswer.trim() || <span className="text-foreground/40">(Keine Antwort)</span>}
+                                    </p>
                                 </div>
-                            </div>
-
-                            {/* Correct Answer */}
-                            <div>
-                                <h4 className="text-sm font-medium text-foreground/60 mb-2">Richtige Antwort:</h4>
-                                <div className="p-4 rounded-lg border-2 border-accent-500 bg-accent-500/10">
-                                    <p className="text-foreground">{card.back}</p>
-                                </div>
-                            </div>
-
-                            {/* Result Indicator */}
-                            <div className={`text-center p-4 rounded-lg ${
-                                isCorrect 
-                                    ? 'bg-green-500/10 border border-green-500' 
-                                    : 'bg-red-500/10 border border-red-500'
-                            }`}>
-                                <div className="flex items-center justify-center gap-2">
-                                    {isCorrect ? (
-                                        <>
-                                            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            <span className="text-green-500 font-medium">Richtig!</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                            <span className="text-red-500 font-medium">Falsch</span>
-                                        </>
-                                    )}
+                                <div className="w-4/5 h-px bg-border mx-auto"></div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-foreground/60 mb-2">Richtige Antwort:</h4>
+                                    <div className="prose max-w-none text-foreground">
+                                        <MarkdownPreview markdown={card.back} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
 
+            {/* Input and Result Section */}
+            <div className="min-h-[160px]">
+                {!showAnswer ? (
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="userAnswer" className="block text-sm font-medium text-foreground mb-2 sr-only">
+                                Deine Antwort:
+                            </label>
+                            <textarea
+                                id="userAnswer"
+                                value={userAnswer}
+                                onChange={(e) => setUserAnswer(e.target.value)}
+                                onKeyDown={handleKeyPress}
+                                placeholder="Gib deine Antwort hier ein..."
+                                className="w-full p-4 border border-border rounded-lg bg-background/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none shadow-inner"
+                                rows={4}
+                                autoFocus
+                            />
+                        </div>
+                        <button
+                            onClick={handleSubmitAnswer}
+                            disabled={!userAnswer.trim()}
+                            className="w-full px-6 py-3 rounded-lg font-medium transition-colors bg-primary-500 hover:bg-primary-600 text-white disabled:bg-primary-500/50 disabled:cursor-not-allowed"
+                        >
+                            Antwort überprüfen
+                        </button>
+                    </div>
+                ) : (
+                    <div className="text-center space-y-4">
+                         <div className={`flex items-center justify-center gap-2 text-2xl font-bold ${
+                            isCorrect ? 'text-green-500' : 'text-red-500'
+                        }`}>
+                            {isCorrect ? (
+                                <>
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Richtig!</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Falsch</span>
+                                </>
+                            )}
+                        </div>
+                        <p className="text-foreground/60">Drücke auf "Weiter", um fortzufahren.</p>
+                    </div>
+                )}
+            </div>
+
             {/* Navigation Buttons */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mt-6">
                 <button
-                    onClick={onPrevious}
-                    disabled={isFirst}
-                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                        isFirst
-                            ? 'bg-background border border-border text-foreground/40 cursor-not-allowed'
-                            : 'bg-background border border-border text-foreground hover:bg-primary-500/10'
-                    }`}
+                    onClick={handlePrevious}
+                    disabled={isFirst || isTransitioning}
+                    className="px-6 py-3 rounded-lg font-medium transition-colors bg-background border border-border text-foreground hover:bg-primary-500/10 disabled:bg-background/50 disabled:text-foreground/40 disabled:cursor-not-allowed"
                 >
                     ← Zurück
                 </button>
 
                 <button
-                    onClick={handleConfirmAnswer}
-                    disabled={!showAnswer}
-                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                        showAnswer
-                            ? 'bg-primary-500 hover:bg-primary-600 text-white'
-                            : 'bg-background border border-border text-foreground/40 cursor-not-allowed'
-                    }`}
+                    onClick={handleNext}
+                    disabled={!showAnswer || isTransitioning}
+                    className="px-6 py-3 rounded-lg font-medium transition-colors bg-primary-500 hover:bg-primary-600 text-white disabled:bg-primary-500/50 disabled:cursor-not-allowed"
                 >
                     {isLast ? 'Beenden' : 'Weiter →'}
                 </button>

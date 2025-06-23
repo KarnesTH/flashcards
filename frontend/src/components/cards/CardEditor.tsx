@@ -213,7 +213,7 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                 {activeCard ? (
                     <div className="space-y-6">
                         {/* Front Card */}
-                        <div className="preview-card rounded-xl overflow-hidden relative group">
+                        <div className="preview-card md:w-xl w-full h-80 rounded-xl overflow-hidden relative group mx-auto">
                             <button
                                 onClick={() => openEditor(activeCardIndex!, 'front')}
                                 className="absolute top-4 -right-4 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-lg z-10"
@@ -223,18 +223,18 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                 </svg>
                             </button>
-                            <div className="flex flex-col gap-4 justify-center items-center min-h-72 h-80">
+                            <div className="flex flex-col gap-4 justify-center items-center">
                                 <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                                     Frage
                                 </h3>
-                                <div className="prose max-w-none">
+                                <div className="prose p-4">
                                     <MarkdownPreview markdown={activeCard.front} />
                                 </div>
                             </div>
                         </div>
 
                         {/* Back Card */}
-                        <div className="preview-card rounded-xl overflow-hidden relative group">
+                        <div className="preview-card md:w-xl w-full h-80 rounded-xl overflow-hidden relative group mx-auto">
                             <button
                                 onClick={() => openEditor(activeCardIndex!, 'back')}
                                 className="absolute top-4 -right-4 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-lg z-10"
@@ -244,11 +244,11 @@ const CardEditor = ({ deck }: CardEditorProps) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                 </svg>
                             </button>
-                            <div className="flex flex-col gap-4 justify-center items-center min-h-72 h-80">
+                            <div className="flex flex-col gap-4 justify-center items-center">
                                 <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
                                     Antwort
                                 </h3>
-                                <div className="prose max-w-none">
+                                <div className="prose p-4">
                                     <MarkdownPreview markdown={activeCard.back} />
                                 </div>
                             </div>

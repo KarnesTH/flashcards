@@ -150,13 +150,12 @@ const Editor = ({ text, cardType, onSave }: EditorProps) => {
         setMarkdown(newLines.join('\n'));
     }
 
-    // Update markdown when text prop changes
     useEffect(() => {
         setMarkdown(text);
     }, [text]);
 
     return (
-        <div className="flex flex-col md:flex-row gap-4 w-full p-4 border border-border shadow-2xl shadow-foreground/10 rounded-md justify-center items-center max-h-screen h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-border shadow-2xl shadow-foreground/10 rounded-md justify-center items-center max-h-screen h-full">
             <div className="border border-border rounded-md w-full p-4 h-full">
                 <div className="flex gap-2 w-full mb-4 border-b flex-wrap border-border pb-4">
                     <button 
@@ -264,13 +263,20 @@ const Editor = ({ text, cardType, onSave }: EditorProps) => {
                 </div>
                 <div className="flex flex-col">
                     <label htmlFor="markdown" className="sr-only">Text Editor</label>
-                    <textarea className="w-full h-80 resize-none focus:outline-primary-500 border border-border rounded-md p-2" id="markdown" value={markdown} onChange={handleMarkdownChange} />
+                    <textarea 
+                        className="w-full h-80 resize-none focus:outline-primary-500 border border-border rounded-md p-2" 
+                        id="markdown" 
+                        value={markdown} 
+                        onChange={handleMarkdownChange}
+                    />
                 </div>
             </div>
-            <div className="preview-card rounded-md w-full p-4">
-                <div className="flex flex-col gap-4 justify-center items-center">
-                    <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">{cardType === 'front' ? 'Frage' : 'Antwort'}</h3>
-                    <div className="prose p-6 text-center w-full h-full min-h-72">
+            <div className="preview-card md:w-lg w-full h-80 rounded-xl overflow-hidden relative group mx-auto">
+                <div className="flex flex-col gap-4 justify-center items-center p-4">
+                    <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
+                        {cardType === 'front' ? 'Frage' : 'Antwort'}
+                    </h3>
+                    <div className="prose p-4">
                         <MarkdownPreview markdown={markdown} />
                     </div>
                 </div>
