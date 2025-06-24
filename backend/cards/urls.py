@@ -6,6 +6,7 @@ from .views import (
     CardViewSet,
     DeckViewSet,
     LearningSessionViewSet,
+    LearningStatsView,
     UserViewSet,
 )
 
@@ -22,4 +23,5 @@ router.register(r'card-reviews', CardReviewViewSet, basename='cardreview')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('learning-stats/', LearningStatsView.as_view(), name='learning-stats'),
 ]

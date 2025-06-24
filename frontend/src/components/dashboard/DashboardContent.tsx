@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
-import type { Deck, User } from '../../types/types';
+import type { Deck, User, UserLearningStats, DeckStats } from '../../types/types';
 import DashboardCard from './DashboardCard';
 import DashboardStats from './DashboardStats';
 import DeckModal from '../modals/DeckModal';
@@ -16,6 +16,8 @@ import DeckManagementPage from '../decks/DeckManagementPage';
 const DashboardContent = () => {
     const [user, setUser] = useState<User | null>(null);
     const [decks, setDecks] = useState<Deck[]>([]);
+    const [learningStats, setLearningStats] = useState<UserLearningStats | undefined>(undefined);
+    const [deckStats, setDeckStats] = useState<DeckStats[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,6 +30,16 @@ const DashboardContent = () => {
             setViewingDeckId(Number(deckId));
         }
         loadDashboardData();
+        
+        const handleFocus = () => {
+            loadDashboardData();
+        };
+        
+        window.addEventListener('focus', handleFocus);
+        
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     const updateURL = (deckId: number | null) => {
@@ -51,13 +63,18 @@ const DashboardContent = () => {
             setIsLoading(true);
             setError(null);
 
-            const [userData, decksData] = await Promise.all([
+            const [userData, decksData, learningStatsData] = await Promise.all([
                 api.getCurrentUser(),
-                api.getDecks()
+                api.getDecks(),
+                api.getUserLearningStats().catch(() => undefined)
             ]);
+            
+            const deckStatsData = await api.getDeckStats().catch(() => []);
             
             setUser(userData);
             setDecks(decksData);
+            setLearningStats(learningStatsData);
+            setDeckStats(deckStatsData);
 
         } catch (err) {
             console.error('Fehler beim Laden der Dashboard-Daten:', err);
@@ -99,11 +116,24 @@ const DashboardContent = () => {
         loadDashboardData();
     };
 
+    /**
+     * Handle Select Deck
+     * 
+     * @description This function is used to select a deck.
+     * 
+     * @param deckId - The id of the deck to select
+     */
     const handleSelectDeck = (deckId: number) => {
         setViewingDeckId(deckId);
         updateURL(deckId);
     };
 
+    /**
+     * Handle Back to Dashboard
+     * 
+     * @description This function is used to go back to the dashboard.
+     * 
+     */
     const handleBackToDashboard = () => {
         setViewingDeckId(null);
         updateURL(null);
@@ -136,15 +166,25 @@ const DashboardContent = () => {
         );
     }
 
+    if (!user) {
+        return (
+            <div className="text-center py-8">
+                <p className="text-foreground/60">Benutzerdaten konnten nicht geladen werden</p>
+                <button 
+                    onClick={loadDashboardData}
+                    className="mt-4 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors"
+                >
+                    Erneut versuchen
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <DashboardStats 
-                cards={user?.total_cards_created || 0} 
-                decks={decks.length} 
-                learnedCards={user?.total_cards_reviewed || 0} 
-                averageScore={user?.learning_accuracy || 0} 
-                learningSessions={user?.total_learning_sessions || 0}
-                totalReviews={user?.total_cards_reviewed || 0}
+                user={user}
+                learningStats={learningStats}
             />
 
             <div className="bg-background rounded-2xl shadow-lg border border-border p-8">
@@ -189,14 +229,18 @@ const DashboardContent = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {decks.map((deck) => (
-                            <DashboardCard 
-                                key={deck.id} 
-                                {...deck} 
-                                onDelete={handleDeleteDeck}
-                                onEdit={handleSelectDeck}
-                            />
-                        ))}
+                        {decks.map((deck) => {
+                            const deckStat = deckStats.find(stat => stat.id === deck.id);
+                            return (
+                                <DashboardCard 
+                                    key={deck.id} 
+                                    {...deck} 
+                                    deckStats={deckStat}
+                                    onDelete={handleDeleteDeck}
+                                    onEdit={handleSelectDeck}
+                                />
+                            );
+                        })}
                     </div>
                 )}
             </div>

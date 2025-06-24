@@ -18,6 +18,23 @@ export interface User {
     learning_accuracy: number;
 }
 
+// SRS-specific Types
+export interface DeckStats {
+    id: number;
+    due_cards_count: number;
+    average_ease_factor: number;
+    last_session_date?: string;
+    last_session_accuracy?: number;
+    next_review_date?: string;
+}
+
+export interface UserLearningStats {
+    due_cards_count: number;
+    learning_streak: number;
+    average_response_time: number;
+    recent_accuracy: number;
+}
+
 // Deck Types
 export interface Deck {
     id: number;

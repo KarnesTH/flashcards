@@ -1,4 +1,4 @@
-import type { User, Deck, Card, LearningSession, CardReview, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData } from '../types/types';
+import type { User, Deck, Card, LearningSession, CardReview, UserLearningStats, DeckStats, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData } from '../types/types';
 import { ApiError } from '../types/errors';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
@@ -499,10 +499,34 @@ class Api {
             data.time_taken = timeTaken;
         }
         
+        console.log('Creating CardReview:', data);
+        
         return this.request('/card-reviews/', {
             method: 'POST',
             body: JSON.stringify(data),
         });
+    }
+
+    /**
+     * Get user learning statistics for SRS dashboard
+     * 
+     * @description This function is used to get SRS-specific learning statistics.
+     * 
+     * @returns The user learning statistics
+     */
+    async getUserLearningStats(): Promise<UserLearningStats> {
+        return this.request('/learning-stats/');
+    }
+
+    /**
+     * Get deck statistics for SRS dashboard
+     * 
+     * @description This function is used to get SRS-specific statistics for all user's decks.
+     * 
+     * @returns Array of deck statistics
+     */
+    async getDeckStats(): Promise<DeckStats[]> {
+        return this.request('/decks/stats/');
     }
 }
 
