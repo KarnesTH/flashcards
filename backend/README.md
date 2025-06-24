@@ -131,6 +131,48 @@ API endpoints are accessible from:
 - `http://localhost:4321` (Astro Development)
 - `https://flashcards.example.com` (Production)
 
+## 🏗️ SRS Architekture
+
+```mermaid
+flowchart TD
+    Start([Lernsession starten]) --> LadeKarten[Alle Karten des Decks laden]
+    LadeKarten --> FilterFällige[Filtere Karten, deren next_review <= heute]
+    FilterFällige --> BerechneGewichtung["Gewichtung berechnen anhand:
+    - durchschnittl. Antwortzeit
+    - Tage überfällig
+    - Wiederholungsanzahl"]
+    BerechneGewichtung --> Sortiere[Sortiere Karten nach Gewichtung]
+    Sortiere --> Shuffle[Leichtes Shuffeln für Variation]
+    Shuffle --> BeginSession[Beginne Lernsession mit 1. Karte]
+
+    subgraph Lernschleife
+        BeginSession --> ZeigeKarte[Zeige Karte dem Nutzer]
+        ZeigeKarte --> WarteAntwort[Warte auf Antwort]
+        WarteAntwort --> MesseDaten[Messe Antwortzeit & ob korrekt]
+
+        MesseDaten --> BerechneBewertung["
+        Berechne Schwierigkeit:
+    - unter 75% der avg_time → leicht (Rating 5)
+    - über 125% → schwer (Rating 2)
+    - sonst → mittel (Rating 4)"]
+
+        BerechneBewertung --> UpdateDaten[
+        Aktualisiere Karte:
+    - review_count++
+    - average_time neu berechnen
+    - ease_factor anpassen
+    - repetition erhöhen oder zurücksetzen
+    - next_review berechnen
+]
+
+        UpdateDaten --> NochKarten{Weitere Karten?}
+        NochKarten -- Ja --> ZeigeKarte
+        NochKarten -- Nein --> EndeSession[Session beenden]
+    end
+
+    EndeSession --> ErgebnisAnzeigen[Ergebnisse und Fortschritt anzeigen]
+```
+
 ## 🛠️ Technology Stack
 
 - **Framework**: Django 5.1
