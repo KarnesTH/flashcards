@@ -60,12 +60,21 @@ impl OllamaAssistant {
     /// # Returns
     /// 
     /// * `GenerateResponse` - The response from the OllamaAssistant
-    pub async fn generate_flashcards(&self, prompt: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
+    pub async fn generate_flashcards(&self, prompt: &str, language: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
         let rules = Self::load_generation_rules()?;
         
+        let is_german = language == "de";
+        
+        let language_instruction = if is_german {
+            "RESPOND IN GERMAN ONLY. Generate all content in German language."
+        } else {
+            "RESPOND IN ENGLISH ONLY. Generate all content in English language."
+        };
+        
         let full_prompt = format!(
-            "{}\n\n## User Request\n{}\n\nGenerate flashcards according to the rules above. Return only the JSON response.",
+            "{}\n\n## CRITICAL INSTRUCTIONS\n{}\n\n## User Request\n{}\n\nGenerate flashcards according to the rules above. Return only the JSON response.",
             rules,
+            language_instruction,
             prompt
         );
 
@@ -94,7 +103,15 @@ impl OllamaAssistant {
         }
         
         if let Some(mut final_resp) = final_response {
-            final_resp.response = full_response;
+            let cleaned_response = full_response
+                .trim()
+                .trim_start_matches("```json")
+                .trim_start_matches("```")
+                .trim_end_matches("```")
+                .trim()
+                .to_string();
+            
+            final_resp.response = cleaned_response;
             Ok(final_resp)
         } else {
             Err("No complete response received".into())
