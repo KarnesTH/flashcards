@@ -18,7 +18,7 @@ pub enum Commands {
         #[clap(short, long)]
         prompt: String,
         #[clap(short, long)]
-        mode: String
+        mode: Option<String>
     },
     #[clap(about = "Serve a HTTP server for the AI API.")]
     Serve,

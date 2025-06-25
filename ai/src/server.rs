@@ -1,11 +1,18 @@
 use std::collections::HashMap;
 
 use axum::{
-    routing::{get}, Json, Router
+    http::StatusCode, routing::get, Json, Router
 };
+use chrono::{DateTime, Utc};
 
 pub struct Server {
     router: Router,
+}
+
+impl Default for Server {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Server {
@@ -25,8 +32,10 @@ impl Server {
     }
 }
 
-pub async fn index() -> Json<HashMap<String, String>> {
-    Json(HashMap::from([
-        ("message".to_string(), "Hello, World!".to_string())
-    ]))
+pub async fn index() -> Result<Json<HashMap<String, String>>, StatusCode> {
+    Ok(Json(HashMap::from([
+        ("message".to_string(), "Hello, World!".to_string()),
+        ("status".to_string(), "success".to_string()),
+        ("timestamp".to_string(), DateTime::<Utc>::from_timestamp(Utc::now().timestamp(), 0).unwrap().to_string())
+    ])))
 }
