@@ -52,10 +52,19 @@ impl OllamaAssistant {
     }
 
     /// Generate flashcards based on the provided prompt using the generation rules
+    /// 
+    /// This function will generate flashcards based on the provided prompt and language.
+    /// The prompt is the user's request for the flashcards.
+    /// The language is the language of the prompt.
+    /// 
+    /// The function will return a GenerateResponse object.
+    /// 
+    /// The GenerateResponse object will contain the flashcards in a JSON format.
     ///
     /// # Arguments
     ///
     /// * `prompt` - The prompt describing what flashcards to generate
+    /// * `language` - The language of the prompt
     ///
     /// # Returns
     /// 

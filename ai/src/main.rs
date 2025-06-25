@@ -7,7 +7,12 @@ async fn main() {
 
     match cli.commands {
         Commands::Generate { prompt, mode } => {
-            println!("Generating flashcards with prompt: {} and mode: {:?}", prompt, mode);
+            if let Some(mode) = mode {
+                println!("Generating flashcards with prompt: {} and mode: {:?}", prompt, mode);
+            } else {
+                println!("Generating flashcards...");
+            }
+
             let assistant = OllamaAssistant::default();
             let response = assistant.generate_flashcards(&prompt, "de").await;
             match response {
