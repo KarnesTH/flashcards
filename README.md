@@ -38,9 +38,12 @@ flowchart TD
         BADGES[Badges & Achievements]
     end
 
-    subgraph LLM
-        AI[fa:fa-robot Rust Ollama Service]
-        GEN[Card Generation]
+    subgraph AI
+        AI_SERVICE[fa:fa-robot Rust Ollama Service]
+        CARD_GEN[Card Generation]
+        ANSWER_EVAL[Answer Evaluation]
+        WEAKNESS_DETECT[Weakness Detection]
+        LEARNING_COACH[Learning Coach]
     end
 
     subgraph DB
@@ -49,7 +52,7 @@ flowchart TD
     end
 
     Frontend <--> Backend
-    Backend --> LLM
+    Backend --> AI
     Backend <--> DB
     Backend <--> Endpoints
     
@@ -60,6 +63,11 @@ flowchart TD
     RESTfull --> AUTH
     RESTfull --> GAME_LOGIC
     RESTfull --> SRS_LOGIC
+    
+    AI_SERVICE --> CARD_GEN
+    AI_SERVICE --> ANSWER_EVAL
+    AI_SERVICE --> WEAKNESS_DETECT
+    AI_SERVICE --> LEARNING_COACH
     
     DB --> MODELS
 ```
