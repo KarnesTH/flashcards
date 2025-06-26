@@ -8,7 +8,7 @@ use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::prelude::OllamaAssistant;
+use crate::prelude::{NlpAssistant, OllamaAssistant};
 
 pub struct Server {
     router: Router,
@@ -28,7 +28,8 @@ impl Server {
         let router = Router::new()
             .route("/", get(index))
             .layer(services)
-            .route("/generate", post(generate_flashcards));
+            .route("/generate", post(generate_flashcards))
+            .route("/nlp", post(nlp));
 
         Self { router }
     }
@@ -86,4 +87,24 @@ pub async fn generate_flashcards(Json(payload): Json<HashMap<String, String>>) -
         })?;
     
     Ok(Json(parsed_response))
+}
+
+/// The NLP route for the server.
+/// Checks the similarity between a correct answer and user answer.
+///
+/// # Arguments
+///
+/// * `payload` - A JSON object with the following fields:
+///   - `answer` - A string containing the correct answer
+///   - `user_answer` - A string containing the user's answer
+///
+/// # Returns
+///
+/// A JSON response with the similarity score.
+pub async fn nlp(Json(payload): Json<HashMap<String, String>>) -> Result<Json<serde_json::Value>, StatusCode> {
+    let assistant = NlpAssistant::new().unwrap();
+    let similarity = assistant.get_answer_similarity(&payload["answer"], &payload["user_answer"]).unwrap();
+    Ok(Json(serde_json::json!({
+        "similarity": similarity
+    })))
 }

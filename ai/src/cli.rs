@@ -24,4 +24,11 @@ pub enum Commands {
     },
     #[clap(about = "Serve a HTTP server for the AI API.")]
     Serve,
+    #[clap(about = "Test the NLP functionality of the AI API.")]
+    Nlp {
+        #[clap(short, long, help = "The answer to check.")]
+        answer: String,
+        #[clap(short, long, help = "The user's answer to check.")]
+        user_answer: String,
+    },
 }

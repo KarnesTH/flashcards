@@ -31,5 +31,16 @@ async fn main() {
             let server = Server::new();
             server.run().await.unwrap();
         }
+        Commands::Nlp { answer, user_answer } => {
+            let answer_clone = answer.clone();
+            let user_answer_clone = user_answer.clone();
+            
+            let similarity = tokio::task::spawn_blocking(move || {
+                let assistant = NlpAssistant::new().unwrap();
+                assistant.get_answer_similarity(&answer_clone, &user_answer_clone).unwrap()
+            }).await.unwrap();
+            
+            println!("Similarity: {}", similarity);
+        }
     }
 }
