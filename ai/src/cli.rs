@@ -15,10 +15,12 @@ pub struct Cli {
 pub enum Commands {
     #[clap(about = "Test the generation functionality of the AI API.")]
     Generate {
-        #[clap(short, long)]
+        #[clap(short, long, help = "The prompt to generate flashcards for.")]
         prompt: String,
-        #[clap(short, long)]
-        mode: Option<String>
+        #[clap(short, long, help = "The model to use for generation.")]
+        model: Option<String>,
+        #[clap(short, long, help = "The language to generate flashcards for.")]
+        language: Option<String>,
     },
     #[clap(about = "Serve a HTTP server for the AI API.")]
     Serve,

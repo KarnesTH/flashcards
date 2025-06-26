@@ -2,10 +2,13 @@ use serde::{Deserialize, Serialize};
 use reqwest::Client;
 use std::fs;
 use std::path::Path;
+use dotenv::dotenv;
+use std::env;
 
 #[derive(Debug)]
 pub struct OllamaAssistant {
     client: Client,
+    host: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -31,8 +34,10 @@ impl Default for OllamaAssistant {
 impl OllamaAssistant {
     /// Create a new OllamaAssistant with the default model "mistral"
     pub fn new() -> Self {
+        dotenv().ok();
         Self {
             client: Client::new(),
+            host: env::var("HOST").unwrap_or_else(|_| "http://localhost:11434".to_string()),
         }
     }
 
@@ -92,7 +97,7 @@ impl OllamaAssistant {
             prompt: full_prompt,
         };
 
-        let url = "http://localhost:11434/api/generate".to_string();
+        let url = format!("http://{}:11434/api/generate", self.host);
 
         let res = self.client.post(url).json(&request).send().await?;
 

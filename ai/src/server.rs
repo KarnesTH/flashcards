@@ -4,6 +4,9 @@ use axum::{
     http::StatusCode, routing::{get, post}, Json, Router
 };
 use chrono::{DateTime, Utc};
+use tower::ServiceBuilder;
+use tower_http::cors::CorsLayer;
+use tower_http::trace::TraceLayer;
 
 use crate::prelude::OllamaAssistant;
 
@@ -19,8 +22,12 @@ impl Default for Server {
 
 impl Server {
     pub fn new() -> Self {
+        let services = ServiceBuilder::new()
+            .layer(TraceLayer::new_for_http())
+            .layer(CorsLayer::permissive());
         let router = Router::new()
             .route("/", get(index))
+            .layer(services)
             .route("/generate", post(generate_flashcards));
 
         Self { router }
@@ -35,6 +42,15 @@ impl Server {
     }
 }
 
+/// The index route for the server.
+/// Returns a JSON response with a message, status, and timestamp.
+///
+/// # Returns
+///
+/// A JSON response with the following fields:
+/// - `message`: A message string
+/// - `status`: A status string
+/// - `timestamp`: A timestamp string
 pub async fn index() -> Result<Json<HashMap<String, String>>, StatusCode> {
     Ok(Json(HashMap::from([
         ("message".to_string(), "Hello, World!".to_string()),
@@ -43,6 +59,18 @@ pub async fn index() -> Result<Json<HashMap<String, String>>, StatusCode> {
     ])))
 }
 
+/// The generate flashcards route for the server.
+/// Generates flashcards for a given prompt and language.
+///
+/// # Arguments
+///
+/// * `payload` - A JSON object with the following fields:
+///   - `prompt` - A string containing the prompt for the flashcards
+///   - `language` - A string containing the language of the flashcards
+///
+/// # Returns
+///
+/// A JSON response with the generated flashcards.
 pub async fn generate_flashcards(Json(payload): Json<HashMap<String, String>>) -> Result<Json<serde_json::Value>, StatusCode> {
     let assistant = OllamaAssistant::new();
     let response = assistant.generate_flashcards(&payload["prompt"], "de").await

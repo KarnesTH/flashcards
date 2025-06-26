@@ -6,15 +6,16 @@ async fn main() {
     let cli = Cli::parse();
 
     match cli.commands {
-        Commands::Generate { prompt, mode } => {
-            if let Some(mode) = mode {
-                println!("Generating flashcards with prompt: {} and mode: {:?}", prompt, mode);
+        Commands::Generate { prompt, model, language } => {
+            if let Some(model) = model {
+                println!("Generating flashcards with prompt: {}", prompt);
+                println!("Using model: {:?}", model);
             } else {
                 println!("Generating flashcards...");
             }
 
             let assistant = OllamaAssistant::default();
-            let response = assistant.generate_flashcards(&prompt, "de").await;
+            let response = assistant.generate_flashcards(&prompt, &language.unwrap_or("de".to_string())).await;
             match response {
                 Ok(response) => {
                     println!("Generated flashcards:");
