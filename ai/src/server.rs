@@ -102,8 +102,14 @@ pub async fn generate_flashcards(Json(payload): Json<HashMap<String, String>>) -
 ///
 /// A JSON response with the similarity score.
 pub async fn nlp(Json(payload): Json<HashMap<String, String>>) -> Result<Json<serde_json::Value>, StatusCode> {
-    let assistant = NlpAssistant::new().unwrap();
-    let similarity = assistant.get_answer_similarity(&payload["answer"], &payload["user_answer"]).unwrap();
+    let answer_clone = payload["answer"].clone();
+    let user_answer_clone = payload["user_answer"].clone();
+
+    let similarity = tokio::task::spawn_blocking(move || {
+        let assistant = NlpAssistant::new().unwrap();
+        assistant.get_answer_similarity(&answer_clone, &user_answer_clone).unwrap()
+    }).await.unwrap();
+
     Ok(Json(serde_json::json!({
         "similarity": similarity
     })))
