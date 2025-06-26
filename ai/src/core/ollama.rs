@@ -37,7 +37,7 @@ impl OllamaAssistant {
         dotenv().ok();
         Self {
             client: Client::new(),
-            host: env::var("HOST").unwrap_or_else(|_| "http://localhost:11434".to_string()),
+            host: env::var("HOST").unwrap_or_else(|_| "localhost".to_string()),
         }
     }
 
@@ -97,7 +97,7 @@ impl OllamaAssistant {
             prompt: full_prompt,
         };
 
-        let url = format!("http://{}:11434/api/generate", self.host);
+        let url = format!("https://{}:11434/api/generate", self.host);
 
         let res = self.client.post(url).json(&request).send().await?;
 
