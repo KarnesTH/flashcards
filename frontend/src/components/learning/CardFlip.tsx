@@ -217,7 +217,16 @@ const CardFlip = ({
                             disabled={!userAnswer.trim()}
                             className="w-full px-6 py-3 rounded-lg font-medium transition-colors bg-primary-500 hover:bg-primary-600 text-white disabled:bg-primary-500/50 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? 'Überprüfe...' : 'Antwort überprüfen'}
+                            {isLoading ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    Überprüfe...
+                                </>
+                            ) : (
+                                <>
+                                    Antwort überprüfen
+                                </>
+                            )}
                         </button>
                     </div>
                 ) : (

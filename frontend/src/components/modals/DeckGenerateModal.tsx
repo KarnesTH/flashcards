@@ -1,18 +1,38 @@
 import { useState } from "react";
 import type { GenerateDeck } from "../../types/types";
 
+/**
+ * DeckGenerateModalProps
+ * 
+ * @description DeckGenerateModalProps is the props for the DeckGenerateModal component.
+ */
 interface DeckGenerateModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSend: (data: GenerateDeck) => void;
 }
 
+/**
+ * DeckGenerateData
+ * 
+ * @description DeckGenerateData is the data that is sent to the AI service.
+ */
 interface DeckGenerateData {
     prompt: string;
     language: string;
 }
 
-
+/**
+ * DeckGenerateModal
+ * 
+ * @description This component is used to show a modal to generate a deck of flashcards using AI.
+ * 
+ * @param isOpen - Whether the modal is open
+ * @param onClose - The function to call when the modal is closed
+ * @param onSend - The function to call when the form is submitted
+ * 
+ * @returns The DeckGenerateModal component
+ */
 const DeckGenerateModal = ({ isOpen, onClose, onSend }: DeckGenerateModalProps) => {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +42,14 @@ const DeckGenerateModal = ({ isOpen, onClose, onSend }: DeckGenerateModalProps) 
         language: "de",
     });
 
+    /**
+     * handleSubmit
+     * 
+     * @description This function is used to handle the form submission.
+     * 
+     * @param e - The form event
+     * 
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -39,6 +67,12 @@ const DeckGenerateModal = ({ isOpen, onClose, onSend }: DeckGenerateModalProps) 
         }
     }
 
+    /**
+     * handleClose
+     * 
+     * @description This function is used to handle the close event.
+     * 
+     */
     const handleClose = () => {
         if (!isLoading) {
             setError(null);
