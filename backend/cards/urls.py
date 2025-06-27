@@ -8,6 +8,9 @@ from .views import (
     LearningSessionViewSet,
     LearningStatsView,
     UserViewSet,
+    AIGenerateView,
+    AIAnswerCheckView,
+    AIHealthCheckView,
 )
 
 router = DefaultRouter()
@@ -24,4 +27,7 @@ router.register(r'card-reviews', CardReviewViewSet, basename='cardreview')
 urlpatterns = [
     path('', include(router.urls)),
     path('learning-stats/', LearningStatsView.as_view(), name='learning-stats'),
+    path('ai/generate/', AIGenerateView.as_view(), name='ai-generate'),
+    path('ai/check-answer/', AIAnswerCheckView.as_view(), name='ai-check-answer'),
+    path('ai/health/', AIHealthCheckView.as_view(), name='ai-health'),
 ]

@@ -234,3 +234,6 @@ SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'JSON_EDITOR': True,
 }
+
+# AI Service Settings
+AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://localhost:3000')

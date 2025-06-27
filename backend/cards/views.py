@@ -19,6 +19,7 @@ from .serializers import (
     LearningSessionSerializer,
     UserSerializer,
 )
+from .ai_service import AIService
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -535,4 +536,141 @@ class CardReviewViewSet(viewsets.ModelViewSet):
             is_correct=review.is_correct,
             taken_time=float(review.time_taken)
         )
+
+class AIGenerateView(APIView):
+    """
+    AI-powered flashcard generation
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Generate flashcards using AI based on a prompt
+        """
+        prompt = request.data.get('prompt')
+        language = request.data.get('language', 'de')
+        
+        if not prompt:
+            return Response({
+                'error': 'Prompt ist erforderlich'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        ai_service = AIService()
+        
+        if not ai_service.is_service_available():
+            return Response({
+                'error': 'AI Service ist nicht verfügbar'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        
+        result = ai_service.generate_flashcards(prompt, language)
+        
+        if result is None:
+            return Response({
+                'error': 'Fehler bei der Flashcard-Generierung'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            deck_data = result.get('deck', {})
+            deck = Deck.objects.create(
+                owner=request.user,
+                title=deck_data.get('title', 'AI-generiertes Deck'),
+                description=deck_data.get('description', ''),
+                is_public=False
+            )
+            
+            cards_data = result.get('cards', [])
+            created_cards = []
+            
+            for card_data in cards_data:
+                card = Card.objects.create(
+                    deck=deck,
+                    front=card_data.get('question', ''),
+                    back=card_data.get('answer', '')
+                )
+                created_cards.append(card)
+            
+            deck_serializer = DeckDetailSerializer(deck)
+            
+            return Response({
+                'message': f'Deck erfolgreich erstellt mit {len(created_cards)} Karten',
+                'deck': deck_serializer.data,
+                'cards_created': len(created_cards)
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'error': f'Fehler beim Erstellen des Decks: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AIAnswerCheckView(APIView):
+    """
+    AI-powered answer correctness checking
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        """
+        Check the correctness of a user's answer using AI
+        """
+        answer = request.data.get('answer')
+        user_answer = request.data.get('user_answer')
+        
+        if not answer or not user_answer:
+            return Response({
+                'error': 'Sowohl answer als auch user_answer sind erforderlich'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        ai_service = AIService()
+        
+        if not ai_service.is_service_available():
+            return Response({
+                'error': 'AI Service ist nicht verfügbar'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        
+        similarity = ai_service.check_answer_correctness(answer, user_answer)
+        
+        if similarity is None:
+            return Response({
+                'error': 'Fehler bei der Antwortbewertung'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        if similarity >= 0.8:
+            category = 'correct'
+            feedback = 'Sehr gut! Deine Antwort ist korrekt.'
+        elif similarity >= 0.6:
+            category = 'partially_correct'
+            feedback = 'Fast richtig! Deine Antwort ist teilweise korrekt.'
+        elif similarity >= 0.4:
+            category = 'close'
+            feedback = 'Du bist nah dran, aber die Antwort ist nicht ganz richtig.'
+        else:
+            category = 'incorrect'
+            feedback = 'Das ist leider nicht richtig. Versuche es nochmal!'
+        
+        return Response({
+            'similarity': similarity,
+            'category': category,
+            'feedback': feedback,
+            'is_correct': similarity >= 0.6
+        }, status=status.HTTP_200_OK)
+
+
+class AIHealthCheckView(APIView):
+    """
+    Health check for AI service
+    """
+    permission_classes = []
+    
+    def get(self, request):
+        """
+        Check if AI service is available
+        """
+        ai_service = AIService()
+        is_available = ai_service.is_service_available()
+        
+        return Response({
+            'ai_service_available': is_available,
+            'ai_service_url': ai_service.ai_base_url
+        }, status=status.HTTP_200_OK)
     
