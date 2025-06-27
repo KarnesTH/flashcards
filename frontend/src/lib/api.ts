@@ -1,4 +1,4 @@
-import type { User, Deck, Card, LearningSession, CardReview, UserLearningStats, DeckStats, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData } from '../types/types';
+import type { User, Deck, Card, LearningSession, CardReview, UserLearningStats, DeckStats, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData, GenerateDeck } from '../types/types';
 import { ApiError } from '../types/errors';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
@@ -527,6 +527,56 @@ class Api {
      */
     async getDeckStats(): Promise<DeckStats[]> {
         return this.request('/decks/stats/');
+    }
+
+    /**
+     * Generate a deck
+     * 
+     * @description This function is used to generate a deck.
+     * 
+     * @param data - The data for the generation
+     * 
+     * @returns The response from the API
+     */
+    async generateDeck(data: GenerateDeck): Promise<{ message: string; deck: Deck; cards_created: number }> {
+        const url = `${API_BASE_URL}/ai/generate/`;
+        const token = localStorage.getItem('access_token');
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
+                signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new ApiError(
+                    errorData.error || errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+                    response.status
+                );
+            }
+            
+            return await response.json();
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error instanceof ApiError) {
+                throw error;
+            }
+            if (error instanceof Error && error.name === 'AbortError') {
+                throw new ApiError('Zeitüberschreitung: Die Generierung hat zu lange gedauert');
+            }
+            throw new ApiError(`Netzwerkfehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+        }
     }
 }
 

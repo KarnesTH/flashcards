@@ -35,8 +35,15 @@ impl OllamaAssistant {
     /// Create a new OllamaAssistant with the default model "mistral"
     pub fn new() -> Self {
         dotenv().ok();
+        
+        // Client mit SSL-Zertifikat-Überprüfung deaktiviert für lokale Entwicklung
+        let client = Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .unwrap_or_else(|_| Client::new());
+        
         Self {
-            client: Client::new(),
+            client,
             host: env::var("HOST").unwrap_or_else(|_| "localhost".to_string()),
         }
     }
@@ -97,7 +104,7 @@ impl OllamaAssistant {
             prompt: full_prompt,
         };
 
-        let url = format!("https://{}:11434/api/generate", self.host);
+        let url = format!("http://{}:11434/api/generate", self.host);
 
         let res = self.client.post(url).json(&request).send().await?;
 

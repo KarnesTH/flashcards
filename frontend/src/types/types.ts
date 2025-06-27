@@ -101,3 +101,8 @@ export interface CreateCardFormData {
     back: string;
     deck: number;
 }
+
+export interface GenerateDeck {
+    prompt: string;
+    language: string;
+}

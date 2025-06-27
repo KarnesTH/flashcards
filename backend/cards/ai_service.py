@@ -35,7 +35,7 @@ class AIService:
             
             logger.info(f"Generating flashcards for prompt: {prompt[:100]}...")
             
-            response = requests.post(url, json=payload, timeout=30)
+            response = requests.post(url, json=payload, timeout=120)
             response.raise_for_status()
             
             result = response.json()

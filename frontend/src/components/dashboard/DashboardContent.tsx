@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
-import type { Deck, User, UserLearningStats, DeckStats } from '../../types/types';
+import type { Deck, User, UserLearningStats, DeckStats, GenerateDeck } from '../../types/types';
 import DashboardCard from './DashboardCard';
 import DashboardStats from './DashboardStats';
 import DeckModal from '../modals/DeckModal';
 import DeckManagementPage from '../decks/DeckManagementPage';
+import DeckGenerateModal from '../modals/DeckGenerateModal';
 
 /**
  * DashboardContent component
@@ -21,6 +22,7 @@ const DashboardContent = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
     const [viewingDeckId, setViewingDeckId] = useState<number | null>(null);
 
     useEffect(() => {
@@ -140,6 +142,18 @@ const DashboardContent = () => {
         loadDashboardData();
     };
 
+    const handleGenerateDeck = async (data: GenerateDeck) => {
+        try {
+            const response = await api.generateDeck(data);
+            setDecks(prevDecks => [response.deck, ...prevDecks]);
+            setIsGenerateModalOpen(false);
+            
+        } catch (err) {
+            console.error('Fehler beim Generieren des Decks:', err);
+            throw err;
+        }
+    }
+
     if (viewingDeckId) {
         return <DeckManagementPage deckId={viewingDeckId} onBack={handleBackToDashboard} />;
     }
@@ -207,6 +221,15 @@ const DashboardContent = () => {
                             </svg>
                             Neues Deck
                         </button>
+                        <button
+                            onClick={() => setIsGenerateModalOpen(true)}
+                            className="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors flex items-center gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+                            </svg>
+                            Mit AI generieren
+                        </button>
                         <div className="relative flex-1 md:w-64">
                             <input 
                                 type="text" 
@@ -250,6 +273,12 @@ const DashboardContent = () => {
                 onClose={() => setIsModalOpen(false)}
                 deck={null}
                 onSave={handleSaveDeck}
+            />
+
+            <DeckGenerateModal
+                isOpen={isGenerateModalOpen}
+                onClose={() => setIsGenerateModalOpen(false)}
+                onSend={handleGenerateDeck}
             />
         </div>
     );
