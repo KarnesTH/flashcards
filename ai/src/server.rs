@@ -25,6 +25,7 @@ impl Server {
         let services = ServiceBuilder::new()
             .layer(TraceLayer::new_for_http())
             .layer(CorsLayer::permissive());
+
         let router = Router::new()
             .route("/", get(index))
             .layer(services)
@@ -107,7 +108,7 @@ pub async fn nlp(Json(payload): Json<HashMap<String, String>>) -> Result<Json<se
 
     let similarity = tokio::task::spawn_blocking(move || {
         let assistant = NlpAssistant::new().unwrap();
-        assistant.get_answer_similarity(&answer_clone, &user_answer_clone).unwrap()
+        assistant.check_answer_correctness(&answer_clone, &user_answer_clone).unwrap()
     }).await.unwrap();
 
     Ok(Json(serde_json::json!({

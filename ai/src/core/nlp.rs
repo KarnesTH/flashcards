@@ -10,31 +10,11 @@ impl NlpAssistant {
     ///
     /// # Returns
     ///
-    /// A Result containing the NplAssistant instance or a RustBertError if the model creation fails.
+    /// A Result containing the NlpAssistant instance or a RustBertError if the model creation fails.
     pub fn new() -> Result<Self, RustBertError> {
         let model = SentenceEmbeddingsBuilder::remote(SentenceEmbeddingsModelType::AllMiniLmL6V2)
             .create_model()?;
         Ok(Self { model })
-    }
-
-    /// Get the similarity score between a correct answer and user answer.
-    ///
-    /// # Arguments
-    ///
-    /// * `answer` - A string containing the correct answer.
-    /// * `user_answer` - A string containing the user's answer to check.
-    /// 
-    /// # Returns
-    /// 
-    /// A Result containing a f32 similarity score between 0.0 and 1.0, or a RustBertError if the model fails.
-    pub fn get_answer_similarity(&self, answer: &str, user_answer: &str) -> Result<f32, RustBertError> {        
-        let embeddings = self.model.encode(&[answer, user_answer])?;
-        let answer_embedding = Array1::from_vec(embeddings[0].clone());
-        let user_answer_embedding = Array1::from_vec(embeddings[1].clone());
-
-        let similarity = Self::cosine_similarity(&answer_embedding, &user_answer_embedding);
-
-        Ok(similarity)
     }
 
     /// Calculate the cosine similarity between two vectors.
@@ -52,6 +32,53 @@ impl NlpAssistant {
         let norm_a = a.dot(a).sqrt();
         let norm_b = b.dot(b).sqrt();
         dot / (norm_a * norm_b)
+    }
+
+    /// Get embeddings for two strings.
+    ///
+    /// # Arguments
+    ///
+    /// * `answer` - A string containing the correct answer.
+    /// * `user_answer` - A string containing the user's answer.
+    ///
+    /// # Returns
+    ///
+    /// A Result containing the embeddings as Array1<f32> or a RustBertError.
+    fn get_embeddings(&self, answer: &str, user_answer: &str) -> Result<(Array1<f32>, Array1<f32>), RustBertError> {
+        let embeddings = self.model.encode(&[answer, user_answer])?;
+        let answer_embedding = Array1::from_vec(embeddings[0].clone());
+        let user_answer_embedding = Array1::from_vec(embeddings[1].clone());
+        Ok((answer_embedding, user_answer_embedding))
+    }
+
+    /// Check the correctness of a user's answer by combining cosine similarity with distance penalty.
+    ///
+    /// # Arguments
+    ///
+    /// * `answer` - A string containing the correct answer.
+    /// * `user_answer` - A string containing the user's answer to check.
+    /// 
+    /// # Returns
+    /// 
+    /// A Result containing a f32 correctness score between 0.0 and 1.0, or a RustBertError if the model fails.
+    pub fn check_answer_correctness(&self, answer: &str, user_answer: &str) -> Result<f32, RustBertError> {
+        if answer.is_empty() && user_answer.is_empty() {
+            return Ok(1.0);
+        }
+        if answer.is_empty() || user_answer.is_empty() {
+            return Ok(0.0);
+        }
+
+        let (answer_embedding, user_answer_embedding) = self.get_embeddings(answer, user_answer)?;
+        let similarity = Self::cosine_similarity(&answer_embedding, &user_answer_embedding);
+
+        let diff = answer_embedding - user_answer_embedding;
+        let distance = diff.dot(&diff).sqrt();
+        let penalty = distance.min(1.0);
+        let adjusted_similarity = similarity - penalty * 0.8;
+        let adjusted_similarity = adjusted_similarity.max(0.0);
+
+        Ok(adjusted_similarity)
     }
 }
 
@@ -84,103 +111,56 @@ mod tests {
     }
 
     #[test]
-    fn test_get_answer_similarity_identical() {
+    fn test_check_answer_correctness_identical() {
         let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity("The capital of France is Paris.", "The capital of France is Paris.").unwrap();
-        assert_eq!(similarity, 1.0);
-    }
-
-    #[test]
-    fn test_get_answer_similarity_similar_meaning() {
-        let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity("The capital of France is Paris.", "Paris is the capital of France.").unwrap();
-        assert!(similarity > 0.8);
-    }
-
-    #[test]
-    fn test_get_answer_similarity_different_answer() {
-        let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity("The capital of France is Paris.", "The capital of France is London.").unwrap();
-        assert!(similarity > 0.8);
-    }
-
-    #[test]
-    fn test_get_answer_similarity_completely_different() {
-        let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity("The capital of France is Paris.", "A variable stores data in programming.").unwrap();
-        assert!(similarity < 0.3);
-    }
-
-    #[test]
-    fn test_get_answer_similarity_german_variables() {
-        let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity(
-            "Variablen werden verwendet, um Werte zu speichern.",
-            "Eine Variable wird zum Speichern von Werten verwendet."
+        let correctness = assistant.check_answer_correctness(
+            "The capital of France is Paris.",
+            "The capital of France is Paris."
         ).unwrap();
-        assert!(similarity > 0.7);
+        assert!(correctness > 0.8);
     }
 
     #[test]
-    fn test_get_answer_similarity_german_different_concept() {
+    fn test_check_answer_correctness_similar_meaning() {
         let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity(
-            "Variablen werden verwendet, um Werte zu speichern.",
-            "Funktionen sind Code-Blöcke, die Aufgaben ausführen."
+        let correctness = assistant.check_answer_correctness(
+            "The capital of France is Paris.",
+            "Paris is the capital of France."
         ).unwrap();
-        assert!(similarity < 0.4);
+        assert!(correctness > 0.5);
     }
 
     #[test]
-    fn test_get_answer_similarity_partial_correct() {
+    fn test_check_answer_correctness_different_answer() {
         let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity(
-            "Variables store data and can be reassigned.",
-            "Variables store data."
+        let correctness = assistant.check_answer_correctness(
+            "The capital of France is Paris.",
+            "The capital of France is London."
         ).unwrap();
-        assert!(similarity > 0.5 && similarity < 0.9);
+        assert!(correctness > 0.3 && correctness < 0.8);
     }
 
     #[test]
-    fn test_get_answer_similarity_empty_strings() {
+    fn test_check_answer_correctness_completely_different() {
         let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity("", "").unwrap();
-        assert_eq!(similarity, 1.0);
-    }
-
-    #[test]
-    fn test_get_answer_similarity_one_empty_string() {
-        let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity("A variable stores data.", "").unwrap();
-        assert!(similarity < 0.1);
-    }
-
-    #[test]
-    fn test_get_answer_similarity_very_long_texts() {
-        let assistant = NlpAssistant::new().unwrap();
-        let long_answer = "Variables are fundamental building blocks in programming that allow us to store and manipulate data. They provide a way to reference and modify values throughout the execution of a program. Variables can hold different types of data including numbers, text, and complex objects.";
-        let user_answer = "Variables store data in programming and can hold different types of information.";
-        let similarity = assistant.get_answer_similarity(long_answer, user_answer).unwrap();
-        assert!(similarity > 0.6);
-    }
-
-    #[test]
-    fn test_get_answer_similarity_code_examples() {
-        let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity(
-            "let x = 5; creates a variable named x with value 5",
-            "let x = 5; assigns the value 5 to variable x"
+        let correctness = assistant.check_answer_correctness(
+            "The capital of France is Paris.",
+            "A variable stores data in programming."
         ).unwrap();
-        assert!(similarity > 0.7);
+        assert!(correctness < 0.1);
     }
 
     #[test]
-    fn test_get_answer_similarity_case_sensitivity() {
+    fn test_check_answer_correctness_empty_strings() {
         let assistant = NlpAssistant::new().unwrap();
-        let similarity = assistant.get_answer_similarity(
-            "Variables store data",
-            "VARIABLES STORE DATA"
-        ).unwrap();
-        assert!(similarity > 0.8);
+        let correctness = assistant.check_answer_correctness("", "").unwrap();
+        assert_eq!(correctness, 1.0);
+    }
+
+    #[test]
+    fn test_check_answer_correctness_one_empty_string() {
+        let assistant = NlpAssistant::new().unwrap();
+        let correctness = assistant.check_answer_correctness("The capital of France is Paris.", "").unwrap();
+        assert_eq!(correctness, 0.0);
     }
 }

@@ -30,5 +30,9 @@ pub enum Commands {
         answer: String,
         #[clap(short, long, help = "The user's answer to check.")]
         user_answer: String,
+        #[clap(short, long, help = "Run performance benchmark with multiple iterations.")]
+        benchmark: Option<usize>,
+        #[clap(short, long, help = "Show detailed timing information.")]
+        verbose: bool,
     },
 }

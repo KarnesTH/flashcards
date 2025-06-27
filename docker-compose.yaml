@@ -1,4 +1,15 @@
 services:
+  flashcards-ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./ai:/app
+    networks:
+      - flashcards-network
+
   flashcards-backend:
     build:
       context: ./backend
@@ -15,5 +26,5 @@ networks:
     driver: bridge
 
 volumes:
-  flashcards-db:
+  flashcards-ai:
     driver: local
