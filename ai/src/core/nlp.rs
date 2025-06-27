@@ -75,10 +75,18 @@ impl NlpAssistant {
         let diff = answer_embedding - user_answer_embedding;
         let distance = diff.dot(&diff).sqrt();
         let penalty = distance.min(1.0);
-        let adjusted_similarity = similarity - penalty * 0.8;
+        let adjusted_similarity = similarity - penalty * 0.25;
         let adjusted_similarity = adjusted_similarity.max(0.0);
 
-        Ok(adjusted_similarity)
+        let final_similarity = if adjusted_similarity > 0.7 {
+            adjusted_similarity * 1.2
+        } else if adjusted_similarity > 0.6 {
+            adjusted_similarity * 1.1
+        } else {
+            adjusted_similarity
+        };
+
+        Ok(final_similarity.min(1.0))
     }
 }
 
@@ -162,5 +170,35 @@ mod tests {
         let assistant = NlpAssistant::new().unwrap();
         let correctness = assistant.check_answer_correctness("The capital of France is Paris.", "").unwrap();
         assert_eq!(correctness, 0.0);
+    }
+
+    #[test]
+    fn test_check_answer_correctness_german_semantic_similar() {
+        let assistant = NlpAssistant::new().unwrap();
+        let correctness = assistant.check_answer_correctness(
+            "Speicherstellen für Werte",
+            "Speicherung von Werten"
+        ).unwrap();
+        assert!(correctness > 0.5, "Expected correctness > 0.5, got {}", correctness);
+    }
+
+    #[test]
+    fn test_check_answer_correctness_german_synonyms() {
+        let assistant = NlpAssistant::new().unwrap();
+        let correctness = assistant.check_answer_correctness(
+            "Variable",
+            "Variablen"
+        ).unwrap();
+        assert!(correctness > 0.7, "Expected correctness > 0.7, got {}", correctness);
+    }
+
+    #[test]
+    fn test_check_answer_correctness_german_different_meaning() {
+        let assistant = NlpAssistant::new().unwrap();
+        let correctness = assistant.check_answer_correctness(
+            "Speicherstellen für Werte",
+            "Schleife"
+        ).unwrap();
+        assert!(correctness < 0.5, "Expected correctness < 0.5, got {}", correctness);
     }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Card } from '../../types/types';
 import MarkdownPreview from '../cards/MarkdownPreview';
+import { api } from '../../lib/api';
 
 /**
  * CardFlipProps interface
@@ -44,8 +45,10 @@ const CardFlip = ({
     const [userAnswer, setUserAnswer] = useState('');
     const [showAnswer, setShowAnswer] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
+    const [feedback, setFeedback] = useState('');
     const [startTime, setStartTime] = useState<number>(Date.now());
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         setUserAnswer('');
@@ -61,15 +64,22 @@ const CardFlip = ({
      * @description This function is used to submit the user's answer.
      * 
      */
-    const handleSubmitAnswer = () => {
+    const handleSubmitAnswer = async () => {
+        setIsLoading(true);
         if (!userAnswer.trim()) return;
         
         const normalizedUserAnswer = userAnswer.trim().toLowerCase().replace(/\s+/g, ' ');
         const normalizedCorrectAnswer = card.back.trim().toLowerCase().replace(/\s+/g, ' ');
         
-        const correct = normalizedUserAnswer === normalizedCorrectAnswer;
-        setIsCorrect(correct);
+        const { is_correct, feedback } = await api.checkAnswerCorrectness({
+            answer: normalizedCorrectAnswer,
+            user_answer: normalizedUserAnswer,
+        });
+
+        setIsCorrect(is_correct);
+        setFeedback(feedback);
         setShowAnswer(true);
+        setIsLoading(false);
     };
 
     /**
@@ -207,7 +217,7 @@ const CardFlip = ({
                             disabled={!userAnswer.trim()}
                             className="w-full px-6 py-3 rounded-lg font-medium transition-colors bg-primary-500 hover:bg-primary-600 text-white disabled:bg-primary-500/50 disabled:cursor-not-allowed"
                         >
-                            Antwort überprüfen
+                            {isLoading ? 'Überprüfe...' : 'Antwort überprüfen'}
                         </button>
                     </div>
                 ) : (
@@ -220,14 +230,14 @@ const CardFlip = ({
                                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span>Richtig!</span>
+                                    <span>{feedback}</span>
                                 </>
                             ) : (
                                 <>
                                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span>Falsch</span>
+                                    <span>{feedback}</span>
                                 </>
                             )}
                         </div>

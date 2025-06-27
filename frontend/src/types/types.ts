@@ -106,3 +106,8 @@ export interface GenerateDeck {
     prompt: string;
     language: string;
 }
+
+export interface CheckAnswerCorrectness {
+    answer: string;
+    user_answer: string;
+}

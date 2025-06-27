@@ -1,4 +1,4 @@
-import type { User, Deck, Card, LearningSession, CardReview, UserLearningStats, DeckStats, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData, GenerateDeck } from '../types/types';
+import type { User, Deck, Card, LearningSession, CardReview, UserLearningStats, DeckStats, RegisterFormData, LoginFormData, CreateDeckFormData, CreateCardFormData, GenerateDeck, CheckAnswerCorrectness } from '../types/types';
 import { ApiError } from '../types/errors';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
@@ -577,6 +577,27 @@ class Api {
             }
             throw new ApiError(`Netzwerkfehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
         }
+    }
+
+    /**
+     * Check the correctness of an answer
+     * 
+     * @description This function is used to check the correctness of an answer.
+     * 
+     * @param data - The data for the check
+     * 
+     * @returns The response from the API
+     */
+    async checkAnswerCorrectness(data: CheckAnswerCorrectness): Promise<{ 
+        similarity: number; 
+        category: string; 
+        feedback: string; 
+        is_correct: boolean 
+    }> {
+        return this.request('/ai/check-answer/', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
     }
 }
 
