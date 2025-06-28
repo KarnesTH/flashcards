@@ -37,4 +37,9 @@ pub enum Commands {
     },
     #[clap(about = "List all available models on the Ollama server.")]
     ListModels,
+    #[clap(about = "Check if a model is available on the Ollama server.")]
+    IsModelAvailable {
+        #[clap(short, long, help = "The name of the model to check.")]
+        model: String,
+    },
 }

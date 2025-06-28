@@ -100,18 +100,16 @@ async fn main() {
         }
         Commands::ListModels => {
             let assistant = OllamaAssistant::default();
-            let models = assistant.list_models().await;
-            match models {
-                Ok(models) => {
-                    println!("Available models:");
-                    for model in models.models {
-                        println!("- {}", model.name);
-                    }
-                }
-                Err(e) => {
-                    println!("Error: {}", e);
-                }
+            let models = assistant.list_models().await.unwrap();
+            println!("Available models:");
+            for model in models.models {
+                println!("- {}", model.name);
             }
+        }
+        Commands::IsModelAvailable { model } => {
+            let assistant = OllamaAssistant::default();
+            let is_available = assistant.is_model_available(&model).await.unwrap();
+            println!("Is model {}, available: {}", model, is_available);
         }
     }
 }

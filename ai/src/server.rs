@@ -127,6 +127,6 @@ pub async fn list_models() -> Result<Json<serde_json::Value>, StatusCode> {
     let assistant = OllamaAssistant::new();
     let models = assistant.list_models().await.unwrap();
     Ok(Json(serde_json::json!({
-        "models": models.models.iter().map(|model| model.name.clone()).collect::<Vec<String>>()
+        "models": models.models
     })))
 }

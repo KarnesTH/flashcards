@@ -11,7 +11,7 @@ pub struct OllamaAssistant {
     host: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GenerateRequest {
     pub model: String,
     pub prompt: String,
@@ -19,7 +19,7 @@ pub struct GenerateRequest {
     pub format: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GenerateResponse {
     pub model: String,
     pub created_at: String,
@@ -27,12 +27,12 @@ pub struct GenerateResponse {
     pub response: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OllamaModels {
     pub models: Vec<OllamaModel>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OllamaModel {
     pub name: String,
     pub model: String,
@@ -42,7 +42,7 @@ pub struct OllamaModel {
     pub details: OllamaModelDetails,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OllamaModelDetails {
     pub parent_model: String,
     pub format: String,
@@ -63,22 +63,13 @@ impl OllamaAssistant {
     pub fn new() -> Self {
         dotenv().ok();
         
-        let client = Client::builder()
-            .danger_accept_invalid_certs(true)
-            .build()
-            .unwrap_or_else(|_| Client::new());
-        
         Self {
-            client,
+            client: Client::new(),
             host: env::var("HOST").unwrap_or_else(|_| "localhost".to_string()),
         }
     }
 
     /// Load the generation rules from the rules file
-    ///
-    /// # Returns
-    ///
-    /// * `String` - The rules from the file
     fn load_generation_rules() -> Result<String, Box<dyn std::error::Error>> {
         let rules_path = Path::new("rules/generate_rule.md");
         if rules_path.exists() {
@@ -108,6 +99,16 @@ impl OllamaAssistant {
     /// 
     /// * `GenerateResponse` - The response from the OllamaAssistant
     pub async fn generate_flashcards(&self, prompt: &str, language: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
+        // Prüfe zuerst ob Ollama läuft
+        if !self.is_ollama_running().await? {
+            return Err("Ollama server is not running".into());
+        }
+
+        // Prüfe ob das gewünschte Model verfügbar ist
+        if !self.is_model_available("mistral").await? {
+            return Err("Model 'mistral' is not available. Please install it with: ollama pull mistral".into());
+        }
+
         let rules = Self::load_generation_rules()?;
         
         let is_german = language == "de";
@@ -176,5 +177,33 @@ impl OllamaAssistant {
         let data_json: OllamaModels = serde_json::from_str(&data)?;
         
         Ok(data_json)
-    }   
+    }
+
+    /// Check if a model is available on the Ollama server
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - The name of the model to check
+    ///
+    /// # Returns
+    /// 
+    /// * `bool` - True if the model is available, false otherwise
+    pub async fn is_model_available(&self, model: &str) -> Result<bool, Box<dyn std::error::Error>> {
+        let models = self.list_models().await?;
+        let is_available = models.models.iter().any(|m| m.name.contains(model));
+
+        Ok(is_available)
+    }
+
+    /// Check if the Ollama server is running
+    ///
+    /// # Returns
+    /// 
+    /// * `bool` - True if the Ollama server is running, false otherwise
+    pub async fn is_ollama_running(&self) -> Result<bool, Box<dyn std::error::Error>> {
+        let url = format!("http://{}:11434/", self.host);
+        let res = self.client.get(url).send().await;
+        
+        Ok(res.is_ok())
+    }
 }
