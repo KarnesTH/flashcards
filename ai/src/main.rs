@@ -98,5 +98,20 @@ async fn main() {
                 println!("Similarity: {:.6}", similarity);
             }
         }
+        Commands::ListModels => {
+            let assistant = OllamaAssistant::default();
+            let models = assistant.list_models().await;
+            match models {
+                Ok(models) => {
+                    println!("Available models:");
+                    for model in models.models {
+                        println!("- {}", model.name);
+                    }
+                }
+                Err(e) => {
+                    println!("Error: {}", e);
+                }
+            }
+        }
     }
 }

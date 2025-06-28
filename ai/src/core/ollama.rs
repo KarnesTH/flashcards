@@ -15,6 +15,8 @@ pub struct OllamaAssistant {
 pub struct GenerateRequest {
     pub model: String,
     pub prompt: String,
+    pub stream: bool,
+    pub format: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,6 +25,31 @@ pub struct GenerateResponse {
     pub created_at: String,
     pub done: bool,
     pub response: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OllamaModels {
+    pub models: Vec<OllamaModel>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OllamaModel {
+    pub name: String,
+    pub model: String,
+    pub modified_at: String,
+    pub size: u64,
+    pub digest: String,
+    pub details: OllamaModelDetails,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OllamaModelDetails {
+    pub parent_model: String,
+    pub format: String,
+    pub family: String,
+    pub families: Vec<String>,
+    pub parameter_size: String,
+    pub quantization_level: String,
 }
 
 impl Default for OllamaAssistant {
@@ -36,7 +63,6 @@ impl OllamaAssistant {
     pub fn new() -> Self {
         dotenv().ok();
         
-        // Client mit SSL-Zertifikat-Überprüfung deaktiviert für lokale Entwicklung
         let client = Client::builder()
             .danger_accept_invalid_certs(true)
             .build()
@@ -102,6 +128,8 @@ impl OllamaAssistant {
         let request = GenerateRequest {
             model: "mistral".to_string(),
             prompt: full_prompt,
+            stream: false,
+            format: Some("json".to_string()),
         };
 
         let url = format!("http://{}:11434/api/generate", self.host);
@@ -126,10 +154,6 @@ impl OllamaAssistant {
         if let Some(mut final_resp) = final_response {
             let cleaned_response = full_response
                 .trim()
-                .trim_start_matches("```json")
-                .trim_start_matches("```")
-                .trim_end_matches("```")
-                .trim()
                 .to_string();
             
             final_resp.response = cleaned_response;
@@ -138,4 +162,19 @@ impl OllamaAssistant {
             Err("No complete response received".into())
         }
     }
+
+    /// List all available models on the Ollama server
+    ///
+    /// # Returns
+    ///
+    /// * `OllamaModels` - A vector of model names
+    pub async fn list_models(&self) -> Result<OllamaModels, Box<dyn std::error::Error>> {
+        let url = format!("http://{}:11434/api/tags", self.host);
+        let res = self.client.get(url).send().await?;
+        let data = res.text().await?;
+
+        let data_json: OllamaModels = serde_json::from_str(&data)?;
+        
+        Ok(data_json)
+    }   
 }

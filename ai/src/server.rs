@@ -30,7 +30,8 @@ impl Server {
             .route("/", get(index))
             .layer(services)
             .route("/generate", post(generate_flashcards))
-            .route("/nlp", post(nlp));
+            .route("/nlp", post(nlp))
+            .route("/models", get(list_models));
 
         Self { router }
     }
@@ -113,5 +114,19 @@ pub async fn nlp(Json(payload): Json<HashMap<String, String>>) -> Result<Json<se
 
     Ok(Json(serde_json::json!({
         "similarity": similarity
+    })))
+}
+
+/// The models route for the server.
+/// Lists all available models on the Ollama server.
+///
+/// # Returns
+///
+/// A JSON response with the list of models.
+pub async fn list_models() -> Result<Json<serde_json::Value>, StatusCode> {
+    let assistant = OllamaAssistant::new();
+    let models = assistant.list_models().await.unwrap();
+    Ok(Json(serde_json::json!({
+        "models": models.models.iter().map(|model| model.name.clone()).collect::<Vec<String>>()
     })))
 }

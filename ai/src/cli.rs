@@ -35,4 +35,6 @@ pub enum Commands {
         #[clap(short, long, help = "Show detailed timing information.")]
         verbose: bool,
     },
+    #[clap(about = "List all available models on the Ollama server.")]
+    ListModels,
 }
