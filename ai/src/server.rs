@@ -8,7 +8,7 @@ use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::prelude::{NlpAssistant, OllamaAssistant};
+use crate::prelude::{NlpAssistant, OllamaAssistant, McpToolRegistry, McpToolCall, helpers};
 
 pub struct Server {
     router: Router,
@@ -31,7 +31,9 @@ impl Server {
             .layer(services)
             .route("/generate", post(generate_flashcards))
             .route("/nlp", post(nlp))
-            .route("/models", get(list_models));
+            .route("/models", get(list_models))
+            .route("/mcp/tools", get(list_mcp_tools))
+            .route("/mcp/execute", post(execute_mcp_tool));
 
         Self { router }
     }
@@ -128,5 +130,52 @@ pub async fn list_models() -> Result<Json<serde_json::Value>, StatusCode> {
     let models = assistant.list_models().await.unwrap();
     Ok(Json(serde_json::json!({
         "models": models.models
+    })))
+}
+
+/// The MCP tools route for the server.
+/// Lists all available MCP tools.
+///
+/// # Returns
+///
+/// A JSON response with the list of MCP tools.
+pub async fn list_mcp_tools() -> Result<Json<serde_json::Value>, StatusCode> {
+    let registry = McpToolRegistry::new();
+    let tools = registry.list_tools();
+    Ok(Json(serde_json::json!({
+        "tools": tools
+    })))
+}
+
+/// The MCP execute route for the server.
+/// Executes a given MCP tool.
+///
+/// # Arguments
+///
+/// * `payload` - A JSON object with the following fields:
+///   - `tool` - A string containing the name of the tool to execute
+///   - `parameters` - A JSON object containing the parameters for the tool
+///
+/// # Returns
+///
+/// A JSON response with the result of the executed tool.
+pub async fn execute_mcp_tool(Json(payload): Json<HashMap<String, serde_json::Value>>) -> Result<Json<serde_json::Value>, StatusCode> {
+    let tool_name = payload["tool"].as_str().ok_or(StatusCode::BAD_REQUEST)?;
+    let parameters = payload["parameters"].as_object().ok_or(StatusCode::BAD_REQUEST)?;
+
+    let tool_call = McpToolCall {
+        name: tool_name.to_string(),
+        arguments: parameters.clone().into_iter().collect(),
+    };
+
+    let registry = McpToolRegistry::new();
+    let result = registry.execute_tool(&tool_call).await
+        .map_err(|e| {
+            println!("Error executing MCP tool: {:?}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Json(serde_json::json!({
+        "result": result
     })))
 }
