@@ -8,7 +8,7 @@ use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
-use crate::prelude::{NlpAssistant, OllamaAssistant, McpToolRegistry, McpToolCall, helpers};
+use crate::prelude::{NlpAssistant, OllamaAssistant, McpToolRegistry, McpToolCall};
 
 pub struct Server {
     router: Router,
