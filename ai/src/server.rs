@@ -78,10 +78,31 @@ pub async fn index() -> Result<Json<HashMap<String, String>>, StatusCode> {
 /// A JSON response with the generated flashcards.
 pub async fn generate_flashcards(Json(payload): Json<HashMap<String, String>>) -> Result<Json<serde_json::Value>, StatusCode> {
     let assistant = OllamaAssistant::new();
+    
+    // Prüfe zuerst, ob Ollama läuft
+    match assistant.is_ollama_running().await {
+        Ok(is_running) => {
+            if !is_running {
+                return Err(StatusCode::SERVICE_UNAVAILABLE);
+            }
+        }
+        Err(_) => {
+            return Err(StatusCode::SERVICE_UNAVAILABLE);
+        }
+    }
+    
     let response = assistant.generate_flashcards(&payload["prompt"], "de").await
         .map_err(|e| {
-            println!("Error generating flashcards: {:?}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
+            let error_msg = e.to_string();
+            println!("Error generating flashcards: {}", error_msg);
+            
+            if error_msg.contains("timed out") {
+                StatusCode::REQUEST_TIMEOUT
+            } else if error_msg.contains("Failed to connect") || error_msg.contains("not running") {
+                StatusCode::SERVICE_UNAVAILABLE
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         })?;
     
     let parsed_response = serde_json::from_str::<serde_json::Value>(&response.response)
@@ -127,7 +148,32 @@ pub async fn nlp(Json(payload): Json<HashMap<String, String>>) -> Result<Json<se
 /// A JSON response with the list of models.
 pub async fn list_models() -> Result<Json<serde_json::Value>, StatusCode> {
     let assistant = OllamaAssistant::new();
-    let models = assistant.list_models().await.unwrap();
+    
+    match assistant.is_ollama_running().await {
+        Ok(is_running) => {
+            if !is_running {
+                return Err(StatusCode::SERVICE_UNAVAILABLE);
+            }
+        }
+        Err(_) => {
+            return Err(StatusCode::SERVICE_UNAVAILABLE);
+        }
+    }
+    
+    let models = assistant.list_models().await
+        .map_err(|e| {
+            let error_msg = e.to_string();
+            println!("Error listing models: {}", error_msg);
+            
+            if error_msg.contains("timed out") {
+                StatusCode::REQUEST_TIMEOUT
+            } else if error_msg.contains("Failed to connect") || error_msg.contains("not running") {
+                StatusCode::SERVICE_UNAVAILABLE
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        })?;
+    
     Ok(Json(serde_json::json!({
         "models": models.models
     })))
@@ -178,4 +224,43 @@ pub async fn execute_mcp_tool(Json(payload): Json<HashMap<String, serde_json::Va
     Ok(Json(serde_json::json!({
         "result": result
     })))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[tokio::test]
+    async fn test_index() {
+        let response = index().await.unwrap();
+        assert!(response.0.contains_key("message"));
+        assert!(response.0.contains_key("status"));
+        assert!(response.0.contains_key("timestamp"));
+    }
+    
+    #[tokio::test]
+    async fn test_nlp() {
+        let response = nlp(Json(HashMap::from([
+            ("answer".to_string(), "The capital of France is Paris.".to_string()),
+            ("user_answer".to_string(), "Paris is the capital of France.".to_string())
+        ]))).await.unwrap();
+        assert!(response.0["similarity"].is_f64());
+    }
+
+    #[tokio::test]
+    async fn test_mcp_tools() {
+        let response = list_mcp_tools().await.unwrap();
+        assert!(response.0["tools"].is_array());
+    }
+
+    #[tokio::test]
+    async fn test_execute_mcp_tool() {
+        let response = execute_mcp_tool(Json(HashMap::from([
+            ("tool".to_string(), serde_json::json!("test_tool")),
+            ("parameters".to_string(), serde_json::json!({}))
+        ]))).await;
+        
+        assert!(response.is_ok() || response.is_err());
+    }
 }

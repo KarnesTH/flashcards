@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use reqwest::Client;
 use dotenv::dotenv;
 use std::env;
+use std::time::Duration;
 
 use crate::utils::rules::{load_card_only_rules, load_explanation_rules, load_generation_rules, load_text_analysis_rules};
 
@@ -63,8 +64,14 @@ impl OllamaAssistant {
     pub fn new() -> Self {
         dotenv().ok();
         
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .connect_timeout(Duration::from_secs(5))
+            .build()
+            .expect("Failed to create HTTP client");
+        
         Self {
-            client: Client::new(),
+            client,
             host: env::var("HOST").unwrap_or_else(|_| "localhost".to_string()),
         }
     }
@@ -220,8 +227,24 @@ impl OllamaAssistant {
     /// * `GenerateResponse` - The response from the Ollama-Server
     async fn send_request(&self, request: &GenerateRequest) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
         let url = format!("http://{}:11434/api/generate", self.host);
-        let res = self.client.post(url).json(request).send().await?;
-        let data = res.text().await?;
+        
+        if !self.is_ollama_running().await? {
+            return Err("Ollama server is not running or not accessible".into());
+        }
+        
+        let res = self.client.post(&url).json(request).send().await
+            .map_err(|e| {
+                if e.is_timeout() {
+                    "Request to Ollama timed out after 30 seconds".to_string()
+                } else if e.is_connect() {
+                    "Failed to connect to Ollama server".to_string()
+                } else {
+                    format!("HTTP request failed: {}", e).to_string()
+                }
+            })?;
+        
+        let data = res.text().await
+            .map_err(|e| format!("Failed to read response: {}", e))?;
         
         let mut full_response = String::new();
         let mut final_response = None;
@@ -241,7 +264,7 @@ impl OllamaAssistant {
             final_resp.response = cleaned_response;
             Ok(final_resp)
         } else {
-            Err("No complete response received".into())
+            Err("No complete response received from Ollama".into())
         }
     }
 
@@ -252,10 +275,27 @@ impl OllamaAssistant {
     /// * `OllamaModels` - The list of available models
     pub async fn list_models(&self) -> Result<OllamaModels, Box<dyn std::error::Error>> {
         let url = format!("http://{}:11434/api/tags", self.host);
-        let res = self.client.get(url).send().await?;
-        let data = res.text().await?;
+        
+        if !self.is_ollama_running().await? {
+            return Err("Ollama server is not running or not accessible".into());
+        }
+        
+        let res = self.client.get(&url).send().await
+            .map_err(|e| {
+                if e.is_timeout() {
+                    "Request to Ollama timed out after 30 seconds".to_string()
+                } else if e.is_connect() {
+                    "Failed to connect to Ollama server".to_string()
+                } else {
+                    format!("HTTP request failed: {}", e).to_string()
+                }
+            })?;
+        
+        let data = res.text().await
+            .map_err(|e| format!("Failed to read response: {}", e))?;
 
-        let data_json: OllamaModels = serde_json::from_str(&data)?;
+        let data_json: OllamaModels = serde_json::from_str(&data)
+            .map_err(|e| format!("Failed to parse JSON response: {}", e))?;
         Ok(data_json)
     }
 
@@ -281,7 +321,9 @@ impl OllamaAssistant {
     /// * `bool` - True if the Ollama-Server is running, false otherwise
     pub async fn is_ollama_running(&self) -> Result<bool, Box<dyn std::error::Error>> {
         let url = format!("http://{}:11434/", self.host);
-        let res = self.client.get(url).send().await;
-        Ok(res.is_ok())
+        match self.client.get(&url).send().await {
+            Ok(_) => Ok(true),
+            Err(_) => Ok(false),
+        }
     }
 }
