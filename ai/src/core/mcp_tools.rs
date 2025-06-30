@@ -31,12 +31,6 @@ pub enum McpContent {
     Flashcards {
         cards: Vec<Flashcard>,
     },
-    #[serde(rename = "evaluation")]
-    Evaluation {
-        score: f32,
-        feedback: String,
-        suggestions: Vec<String>,
-    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -136,29 +130,6 @@ impl McpToolRegistry {
             }),
         };
 
-        let evaluate_tool = McpTool {
-            name: "evaluate_answer".to_string(),
-            description: "Evaluates a user's answer against the correct answer".to_string(),
-            input_schema: serde_json::json!({
-                "type": "object",
-                "properties": {
-                    "correct_answer": {
-                        "type": "string",
-                        "description": "The correct answer"
-                    },
-                    "user_answer": {
-                        "type": "string",
-                        "description": "The user's answer to evaluate"
-                    },
-                    "question": {
-                        "type": "string",
-                        "description": "The question that was asked"
-                    }
-                },
-                "required": ["correct_answer", "user_answer"]
-            }),
-        };
-
         let weakness_tool = McpTool {
             name: "detect_weaknesses".to_string(),
             description: "Analyzes learning patterns to detect weaknesses and suggest practice materials".to_string(),
@@ -193,10 +164,34 @@ impl McpToolRegistry {
             }),
         };
 
+        let explanation_tool = McpTool {
+            name: "explain".to_string(),
+            description: "Provides educational explanations for concepts, wrong answers, or learning questions".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "The question, concept, or topic to explain"
+                    },
+                    "context": {
+                        "type": "string",
+                        "description": "Optional context (e.g., user's wrong answer, specific focus area)"
+                    },
+                    "language": {
+                        "type": "string",
+                        "enum": ["de", "en"],
+                        "description": "Language for the explanation"
+                    }
+                },
+                "required": ["question", "language"]
+            }),
+        };
+
         self.tools.insert(generate_tool.name.clone(), generate_tool);
-        self.tools.insert(evaluate_tool.name.clone(), evaluate_tool);
         self.tools.insert(weakness_tool.name.clone(), weakness_tool);
         self.tools.insert(list_models_tool.name.clone(), list_models_tool);
+        self.tools.insert(explanation_tool.name.clone(), explanation_tool);
     }
 
     /// Register a new tool
@@ -246,9 +241,9 @@ impl McpToolRegistry {
     pub async fn execute_tool(&self, call: &McpToolCall) -> Result<McpToolResult, Box<dyn std::error::Error>> {
         match call.name.as_str() {
             "generate_flashcards" => self.execute_generate_flashcards(call).await,
-            "evaluate_answer" => self.execute_evaluate_answer(call).await,
             "detect_weaknesses" => self.execute_detect_weaknesses(call).await,
             "list_models" => self.execute_list_models(call).await,
+            "explain" => self.execute_explain(call).await,
             _ => Err(format!("Unknown tool: {}", call.name).into()),
         }
     }
@@ -271,14 +266,11 @@ impl McpToolRegistry {
             .and_then(|v| v.as_str())
             .unwrap_or("de");
 
-        // Use OllamaAssistant for actual generation
         let assistant = crate::core::ollama::OllamaAssistant::new();
         let response = assistant.generate_flashcards(prompt, language).await?;
         
-        // Parse the response and convert to MCP format
         match serde_json::from_str::<serde_json::Value>(&response.response) {
             Ok(parsed_data) => {
-                // Convert the parsed JSON to MCP Flashcard format
                 let cards = if let Some(cards_data) = parsed_data.get("cards") {
                     if let Some(cards_array) = cards_data.as_array() {
                         cards_array.iter().filter_map(|card| {
@@ -307,7 +299,6 @@ impl McpToolRegistry {
                 })
             },
             Err(_) => {
-                // Fallback to raw response
                 Ok(McpToolResult {
                     content: vec![McpContent::Text {
                         text: response.response,
@@ -316,51 +307,6 @@ impl McpToolRegistry {
                 })
             }
         }
-    }
-
-    /// Implementation for answer evaluation
-    /// 
-    /// # Arguments
-    /// 
-    /// * `call` - The tool call to execute
-    /// 
-    /// # Returns
-    /// 
-    /// A Result containing the tool result or an error
-    async fn execute_evaluate_answer(&self, call: &McpToolCall) -> Result<McpToolResult, Box<dyn std::error::Error>> {
-        let correct_answer = call.arguments.get("correct_answer")
-            .and_then(|v| v.as_str())
-            .ok_or("Missing correct_answer argument")?;
-        
-        let user_answer = call.arguments.get("user_answer")
-            .and_then(|v| v.as_str())
-            .ok_or("Missing user_answer argument")?;
-
-        // Use NlpAssistant for actual evaluation
-        let similarity = tokio::task::spawn_blocking(move || {
-            let assistant = crate::core::nlp::NlpAssistant::new().unwrap();
-            assistant.check_answer_correctness(correct_answer, user_answer).unwrap()
-        }).await.unwrap();
-        
-        // Generate feedback based on similarity
-        let (feedback, suggestions) = if similarity >= 0.8 {
-            ("Excellent answer! Very close to the correct response.".to_string(), vec![])
-        } else if similarity >= 0.6 {
-            ("Good answer! You're on the right track.".to_string(), vec!["Consider adding more detail".to_string()])
-        } else if similarity >= 0.4 {
-            ("Partial answer. You have some correct elements.".to_string(), vec!["Review the key concepts".to_string(), "Try to be more specific".to_string()])
-        } else {
-            ("Incorrect answer. Please review the material.".to_string(), vec!["Study the topic again".to_string(), "Focus on the main concepts".to_string()])
-        };
-        
-        Ok(McpToolResult {
-            content: vec![McpContent::Evaluation {
-                score: similarity,
-                feedback,
-                suggestions,
-            }],
-            is_error: false,
-        })
     }
 
     /// Implementation for weakness detection
@@ -392,7 +338,6 @@ impl McpToolRegistry {
     /// 
     /// A Result containing the tool result or an error
     async fn execute_list_models(&self, _call: &McpToolCall) -> Result<McpToolResult, Box<dyn std::error::Error>> {
-        // Use OllamaAssistant for actual model listing
         let assistant = crate::core::ollama::OllamaAssistant::new();
         match assistant.list_models().await {
             Ok(models) => {
@@ -416,6 +361,46 @@ impl McpToolRegistry {
                 })
             }
         }
+    }
+
+    /// Implementation for explaining a concept
+    /// 
+    /// # Arguments
+    /// 
+    /// * `call` - The tool call to execute
+    /// 
+    /// # Returns
+    /// 
+    /// A Result containing the tool result or an error
+    async fn execute_explain(&self, call: &McpToolCall) -> Result<McpToolResult, Box<dyn std::error::Error>> {
+        let question = call.arguments.get("question")
+            .and_then(|v| v.as_str())
+            .ok_or("Missing question argument")?;
+        
+        let context = call.arguments.get("context")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        
+        let language = call.arguments.get("language")
+            .and_then(|v| v.as_str())
+            .unwrap_or("en");
+
+        let assistant = crate::core::ollama::OllamaAssistant::new();
+        
+        let prompt = if context.is_empty() {
+            format!("Explain the following concept pedagogically: {}", question)
+        } else {
+            format!("Question: {}\nContext: {}\n\nExplain pedagogically and provide learning tips.", question, context)
+        };
+        
+        let response = assistant.explain_concept(&prompt, language).await?;
+        
+        Ok(McpToolResult {
+            content: vec![McpContent::Text {
+                text: response.response,
+            }],
+            is_error: false,
+        })
     }
 }
 

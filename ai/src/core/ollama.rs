@@ -196,12 +196,12 @@ impl OllamaAssistant {
     /// Explains a concept or answers a question
     /// 
     /// # Arguments
-    /// 
+    ///
     /// * `question` - The question to explain
     /// * `language` - The language of the question ("de" or "en")
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `GenerateResponse` - The response from the Ollama-Server
     pub async fn explain_concept(&self, question: &str, language: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
         self.generate(question, language, GenerationType::Explanation).await
