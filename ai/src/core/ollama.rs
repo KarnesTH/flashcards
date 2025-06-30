@@ -6,10 +6,47 @@ use std::time::Duration;
 
 use crate::utils::rules::{load_card_only_rules, load_explanation_rules, load_generation_rules, load_text_analysis_rules};
 
+#[derive(Debug, Clone)]
+pub enum GenerationType {
+    Flashcards,
+    CardsOnly,
+    TextAnalysis,
+    Explanation,
+}
+
+impl GenerationType {
+    fn get_rules(&self) -> Result<String, Box<dyn std::error::Error>> {
+        match self {
+            GenerationType::Flashcards => load_generation_rules(),
+            GenerationType::CardsOnly => load_card_only_rules(),
+            GenerationType::TextAnalysis => load_text_analysis_rules(),
+            GenerationType::Explanation => load_explanation_rules(),
+        }
+    }
+    
+    fn get_instruction(&self) -> &'static str {
+        match self {
+            GenerationType::Flashcards => "Generate flashcards according to the rules above. Return only the JSON response.",
+            GenerationType::CardsOnly => "Generate cards only. Return only the JSON response.",
+            GenerationType::TextAnalysis => "Analyze the text and extract key concepts. Return only the JSON response.",
+            GenerationType::Explanation => "Provide a clear explanation. Return only the JSON response.",
+        }
+    }
+    
+    fn get_prompt_section(&self) -> &'static str {
+        match self {
+            GenerationType::Flashcards => "## User Request",
+            GenerationType::CardsOnly => "## Request",
+            GenerationType::TextAnalysis => "## Text to Analyze",
+            GenerationType::Explanation => "## Question",
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct OllamaAssistant {
-    client: Client,
-    host: String,
+    pub client: Client,
+    pub host: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -76,6 +113,44 @@ impl OllamaAssistant {
         }
     }
 
+    /// Central generation function that handles all generation types
+    /// 
+    /// # Arguments
+    ///
+    /// * `prompt` - The prompt for generation
+    /// * `language` - The language of the prompt ("de" or "en")
+    /// * `generation_type` - The type of generation to perform
+    ///
+    /// # Returns
+    /// 
+    /// * `GenerateResponse` - The response from the Ollama-Server
+    pub async fn generate(&self, prompt: &str, language: &str, generation_type: GenerationType) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
+        let rules = generation_type.get_rules()?;
+        let language_instruction = if language == "de" {
+            "RESPOND IN GERMAN ONLY. Generate all content in German language."
+        } else {
+            "RESPOND IN ENGLISH ONLY. Generate all content in English language."
+        };
+        
+        let full_prompt = format!(
+            "{}\n\n## CRITICAL INSTRUCTIONS\n{}\n\n{} {}\n\n{}",
+            rules,
+            language_instruction,
+            generation_type.get_prompt_section(),
+            prompt,
+            generation_type.get_instruction()
+        );
+
+        let request = GenerateRequest {
+            model: "mistral".to_string(),
+            prompt: full_prompt,
+            stream: false,
+            format: Some("json".to_string()),
+        };
+
+        self.send_request(&request).await
+    }
+
     /// Generates flashcards based on the prompt and the language
     /// 
     /// # Arguments
@@ -87,28 +162,7 @@ impl OllamaAssistant {
     /// 
     /// * `GenerateResponse` - The response from the Ollama-Server
     pub async fn generate_flashcards(&self, prompt: &str, language: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
-        let rules = load_generation_rules()?;
-        let language_instruction = if language == "de" {
-            "RESPOND IN GERMAN ONLY. Generate all content in German language."
-        } else {
-            "RESPOND IN ENGLISH ONLY. Generate all content in English language."
-        };
-        
-        let full_prompt = format!(
-            "{}\n\n## CRITICAL INSTRUCTIONS\n{}\n\n## User Request\n{}\n\nGenerate flashcards according to the rules above. Return only the JSON response.",
-            rules,
-            language_instruction,
-            prompt
-        );
-
-        let request = GenerateRequest {
-            model: "mistral".to_string(),
-            prompt: full_prompt,
-            stream: false,
-            format: Some("json".to_string()),
-        };
-
-        self.send_request(&request).await
+        self.generate(prompt, language, GenerationType::Flashcards).await
     }
 
     /// Generates cards only
@@ -122,28 +176,7 @@ impl OllamaAssistant {
     /// 
     /// * `GenerateResponse` - The response from the Ollama-Server
     pub async fn generate_cards_only(&self, prompt: &str, language: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
-        let rules = load_card_only_rules()?;
-        let language_instruction = if language == "de" {
-            "RESPOND IN GERMAN ONLY."
-        } else {
-            "RESPOND IN ENGLISH ONLY."
-        };
-        
-        let full_prompt = format!(
-            "{}\n\n## INSTRUCTIONS\n{}\n\n## Request\n{}\n\nGenerate cards only. Return only the JSON response.",
-            rules,
-            language_instruction,
-            prompt
-        );
-
-        let request = GenerateRequest {
-            model: "mistral".to_string(),
-            prompt: full_prompt,
-            stream: false,
-            format: Some("json".to_string()),
-        };
-
-        self.send_request(&request).await
+        self.generate(prompt, language, GenerationType::CardsOnly).await
     }
 
     /// Analyzes text and extracts key concepts
@@ -157,28 +190,7 @@ impl OllamaAssistant {
     /// 
     /// * `GenerateResponse` - The response from the Ollama-Server
     pub async fn analyze_text(&self, text: &str, language: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
-        let rules = load_text_analysis_rules()?;
-        let language_instruction = if language == "de" {
-            "RESPOND IN GERMAN ONLY."
-        } else {
-            "RESPOND IN ENGLISH ONLY."
-        };
-        
-        let full_prompt = format!(
-            "{}\n\n## INSTRUCTIONS\n{}\n\n## Text to Analyze\n{}\n\nAnalyze the text and extract key concepts. Return only the JSON response.",
-            rules,
-            language_instruction,
-            text
-        );
-
-        let request = GenerateRequest {
-            model: "mistral".to_string(),
-            prompt: full_prompt,
-            stream: false,
-            format: Some("json".to_string()),
-        };
-
-        self.send_request(&request).await
+        self.generate(text, language, GenerationType::TextAnalysis).await
     }
 
     /// Explains a concept or answers a question
@@ -192,28 +204,7 @@ impl OllamaAssistant {
     /// 
     /// * `GenerateResponse` - The response from the Ollama-Server
     pub async fn explain_concept(&self, question: &str, language: &str) -> Result<GenerateResponse, Box<dyn std::error::Error>> {
-        let rules = load_explanation_rules()?;
-        let language_instruction = if language == "de" {
-            "RESPOND IN GERMAN ONLY."
-        } else {
-            "RESPOND IN ENGLISH ONLY."
-        };
-        
-        let full_prompt = format!(
-            "{}\n\n## INSTRUCTIONS\n{}\n\n## Question\n{}\n\nProvide a clear explanation. Return only the JSON response.",
-            rules,
-            language_instruction,
-            question
-        );
-
-        let request = GenerateRequest {
-            model: "mistral".to_string(),
-            prompt: full_prompt,
-            stream: false,
-            format: Some("json".to_string()),
-        };
-
-        self.send_request(&request).await
+        self.generate(question, language, GenerationType::Explanation).await
     }
 
     /// Sends a request to the Ollama-Server

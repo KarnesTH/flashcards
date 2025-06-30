@@ -1,6 +1,6 @@
 # Generating Rules for creating Decks and Cards
 
-These rules define how the AI should generate flashcards for a learning application. The AI analyzes a topic or text and creates a structured deck with learning cards.
+These rules define how the AI should generate flashcards cards for a learning application. The AI analyzes a topic or text and creates a structured learning cards.
 
 ## Input
 - **Topic/Text**: The user provides a topic or text for which flashcards should be generated
@@ -19,10 +19,6 @@ The AI returns **exclusively a JSON object**, no additional explanations or text
 
 ```json
 {
-    "deck": {
-        "title": "Short, concise title (max 255 characters)",
-        "description": "Detailed description of the learning content (max 500 characters)"
-    },
     "cards": [
         {
             "question": "Markdown-formatted question with code syntax highlighting",
@@ -33,11 +29,6 @@ The AI returns **exclusively a JSON object**, no additional explanations or text
 ```
 
 ## Generation Rules
-
-### Deck Rules
-- **Title**: Short and concise, describes the main topic (use same language as user prompt)
-- **Description**: Explains the learning content and target audience (use same language as user prompt)
-- **Length**: Title max 255 characters, description max 500 characters
 
 ### Card Rules
 - **Number**: Generate an appropriate number based on topic complexity and user request

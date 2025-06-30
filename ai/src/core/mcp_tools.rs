@@ -183,9 +183,20 @@ impl McpToolRegistry {
             }),
         };
 
+        let list_models_tool = McpTool {
+            name: "list_models".to_string(),
+            description: "Lists all available models on the Ollama server".to_string(),
+            input_schema: serde_json::json!({
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+        };
+
         self.tools.insert(generate_tool.name.clone(), generate_tool);
         self.tools.insert(evaluate_tool.name.clone(), evaluate_tool);
         self.tools.insert(weakness_tool.name.clone(), weakness_tool);
+        self.tools.insert(list_models_tool.name.clone(), list_models_tool);
     }
 
     /// Register a new tool
@@ -237,6 +248,7 @@ impl McpToolRegistry {
             "generate_flashcards" => self.execute_generate_flashcards(call).await,
             "evaluate_answer" => self.execute_evaluate_answer(call).await,
             "detect_weaknesses" => self.execute_detect_weaknesses(call).await,
+            "list_models" => self.execute_list_models(call).await,
             _ => Err(format!("Unknown tool: {}", call.name).into()),
         }
     }
@@ -251,31 +263,59 @@ impl McpToolRegistry {
     /// 
     /// A Result containing the tool result or an error
     async fn execute_generate_flashcards(&self, call: &McpToolCall) -> Result<McpToolResult, Box<dyn std::error::Error>> {
-        let _prompt = call.arguments.get("prompt")
+        let prompt = call.arguments.get("prompt")
             .and_then(|v| v.as_str())
             .ok_or("Missing prompt argument")?;
         
-        let _language = call.arguments.get("language")
+        let language = call.arguments.get("language")
             .and_then(|v| v.as_str())
             .unwrap_or("de");
 
-        // TODO: Integration with OllamaAssistant
+        // Use OllamaAssistant for actual generation
+        let assistant = crate::core::ollama::OllamaAssistant::new();
+        let response = assistant.generate_flashcards(prompt, language).await?;
         
-        // Placeholder response
-        let cards = vec![
-            Flashcard {
-                question: "Sample question".to_string(),
-                answer: "Sample answer".to_string(),
-                difficulty: "medium".to_string(),
-                tags: vec!["sample".to_string()],
-                explanation: None,
-            }
-        ];
+        // Parse the response and convert to MCP format
+        match serde_json::from_str::<serde_json::Value>(&response.response) {
+            Ok(parsed_data) => {
+                // Convert the parsed JSON to MCP Flashcard format
+                let cards = if let Some(cards_data) = parsed_data.get("cards") {
+                    if let Some(cards_array) = cards_data.as_array() {
+                        cards_array.iter().filter_map(|card| {
+                            if let (Some(question), Some(answer)) = (card.get("question"), card.get("answer")) {
+                                Some(Flashcard {
+                                    question: question.as_str().unwrap_or("").to_string(),
+                                    answer: answer.as_str().unwrap_or("").to_string(),
+                                    difficulty: "medium".to_string(),
+                                    tags: vec![],
+                                    explanation: None,
+                                })
+                            } else {
+                                None
+                            }
+                        }).collect()
+                    } else {
+                        vec![]
+                    }
+                } else {
+                    vec![]
+                };
 
-        Ok(McpToolResult {
-            content: vec![McpContent::Flashcards { cards }],
-            is_error: false,
-        })
+                Ok(McpToolResult {
+                    content: vec![McpContent::Flashcards { cards }],
+                    is_error: false,
+                })
+            },
+            Err(_) => {
+                // Fallback to raw response
+                Ok(McpToolResult {
+                    content: vec![McpContent::Text {
+                        text: response.response,
+                    }],
+                    is_error: false,
+                })
+            }
+        }
     }
 
     /// Implementation for answer evaluation
@@ -288,24 +328,36 @@ impl McpToolRegistry {
     /// 
     /// A Result containing the tool result or an error
     async fn execute_evaluate_answer(&self, call: &McpToolCall) -> Result<McpToolResult, Box<dyn std::error::Error>> {
-        let _correct_answer = call.arguments.get("correct_answer")
+        let correct_answer = call.arguments.get("correct_answer")
             .and_then(|v| v.as_str())
             .ok_or("Missing correct_answer argument")?;
         
-        let _user_answer = call.arguments.get("user_answer")
+        let user_answer = call.arguments.get("user_answer")
             .and_then(|v| v.as_str())
             .ok_or("Missing user_answer argument")?;
 
-        // TODO: Integration mit NlpAssistant
+        // Use NlpAssistant for actual evaluation
+        let similarity = tokio::task::spawn_blocking(move || {
+            let assistant = crate::core::nlp::NlpAssistant::new().unwrap();
+            assistant.check_answer_correctness(correct_answer, user_answer).unwrap()
+        }).await.unwrap();
         
-        // Placeholder response
-        let similarity = 0.8;
+        // Generate feedback based on similarity
+        let (feedback, suggestions) = if similarity >= 0.8 {
+            ("Excellent answer! Very close to the correct response.".to_string(), vec![])
+        } else if similarity >= 0.6 {
+            ("Good answer! You're on the right track.".to_string(), vec!["Consider adding more detail".to_string()])
+        } else if similarity >= 0.4 {
+            ("Partial answer. You have some correct elements.".to_string(), vec!["Review the key concepts".to_string(), "Try to be more specific".to_string()])
+        } else {
+            ("Incorrect answer. Please review the material.".to_string(), vec!["Study the topic again".to_string(), "Focus on the main concepts".to_string()])
+        };
         
         Ok(McpToolResult {
             content: vec![McpContent::Evaluation {
                 score: similarity,
-                feedback: "Good answer!".to_string(),
-                suggestions: vec!["Consider adding more detail".to_string()],
+                feedback,
+                suggestions,
             }],
             is_error: false,
         })
@@ -328,6 +380,42 @@ impl McpToolRegistry {
             }],
             is_error: false,
         })
+    }
+
+    /// Implementation for listing models
+    /// 
+    /// # Arguments
+    /// 
+    /// * `call` - The tool call to execute
+    /// 
+    /// # Returns
+    /// 
+    /// A Result containing the tool result or an error
+    async fn execute_list_models(&self, _call: &McpToolCall) -> Result<McpToolResult, Box<dyn std::error::Error>> {
+        // Use OllamaAssistant for actual model listing
+        let assistant = crate::core::ollama::OllamaAssistant::new();
+        match assistant.list_models().await {
+            Ok(models) => {
+                let models_info = models.models.iter().map(|model| {
+                    format!("- {} ({} MB)", model.name, model.size / 1024 / 1024)
+                }).collect::<Vec<_>>().join("\n");
+                
+                Ok(McpToolResult {
+                    content: vec![McpContent::Text {
+                        text: format!("Available models:\n{}", models_info),
+                    }],
+                    is_error: false,
+                })
+            },
+            Err(e) => {
+                Ok(McpToolResult {
+                    content: vec![McpContent::Text {
+                        text: format!("Error listing models: {}", e),
+                    }],
+                    is_error: true,
+                })
+            }
+        }
     }
 }
 

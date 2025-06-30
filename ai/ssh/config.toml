@@ -1,0 +1,28 @@
+[ssh]
+# SSH Server Configuration
+port = 2222
+host = "127.0.0.1"
+
+[authentication]
+# Allowed users for SSH access
+allowed_users = ["flashcard_user"]
+
+# Public key authentication
+public_key_enabled = true
+public_key_path = "./ssh/flashcard_key.pub"
+
+# Password authentication (for fallback)
+password_enabled = true
+allowed_passwords = ["flashcard_secure_password_2024"]
+
+[security]
+# Connection timeout in seconds
+timeout = 30
+# Max concurrent connections
+max_connections = 10
+
+[logging]
+# Enable debug logging
+debug = true
+# Log authentication attempts
+log_auth = true 
