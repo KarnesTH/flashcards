@@ -1,16 +1,14 @@
 use std::collections::HashMap;
-use std::net::{TcpListener, TcpStream};
-use std::sync::Arc;
+use std::net::{TcpListener};
 use std::io::{Read, Write};
 use std::fs;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use ssh2::Session;
-use tokio::sync::Mutex;
 use toml;
 use bcrypt::{hash, verify, DEFAULT_COST};
 
-use crate::prelude::{NlpAssistant, OllamaAssistant, McpToolRegistry, McpToolCall, GenerationType};
+use crate::prelude::{McpToolRegistry, McpToolCall};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SSHRequest {
@@ -129,7 +127,7 @@ impl Server {
             let stream = stream?;
             
             tokio::spawn(async move {
-                if let Err(e) = Self::handle_connection(stream).await {
+                if let Err(e) = Self::handle_connection(stream, self.config).await {
                     eprintln!("Connection error: {}", e);
                 }
             });
@@ -147,24 +145,24 @@ impl Server {
     /// # Arguments
     ///
     /// * `stream` - The TCP stream from the client
+    /// * `config` - The SSH configuration to use for authentication
     ///
     /// # Returns
     ///
     /// A `Result` containing an error if the connection fails
-    async fn handle_connection(stream: std::net::TcpStream) -> Result<(), Box<dyn std::error::Error>> {
+    async fn handle_connection(stream: std::net::TcpStream, config: SSHConfig) -> Result<(), Box<dyn std::error::Error>> {
         let mut session = Session::new()?;
         session.set_tcp_stream(stream);
         session.handshake()?;
 
-        let config = SSHConfig::default();
         if !Self::authenticate_session(&session, &config).await? {
             eprintln!("SSH authentication failed");
             return Ok(());
         }
 
-        let channel = session.channel_session()?;
+        let mut channel = session.channel_session()?;
         
-        Self::send_response_via_channel(&channel, SSHResponse {
+        Self::send_response_via_channel(&mut channel, SSHResponse {
             status: "connected".to_string(),
             state: "ready".to_string(),
             data: None,
@@ -183,10 +181,10 @@ impl Server {
 
                     match serde_json::from_str::<SSHRequest>(&command_data) {
                         Ok(request) => {
-                            Self::process_request_with_streaming_via_channel(&channel, request).await?;
+                            Self::process_request_with_streaming_via_channel(&mut channel, request).await?;
                         }
                         Err(e) => {
-                            Self::send_response_via_channel(&channel, SSHResponse {
+                            Self::send_response_via_channel(&mut channel, SSHResponse {
                                 status: "error".to_string(),
                                 state: "error".to_string(),
                                 data: None,
@@ -197,6 +195,9 @@ impl Server {
                 }
                 Ok(0) => {
                     break;
+                }
+                Ok(_) => {
+                    continue;
                 }
                 Err(e) => {
                     eprintln!("Error reading from SSH channel: {}", e);
@@ -251,9 +252,11 @@ impl Server {
     ///
     /// * `bool` - True if authentication successful, false otherwise
     async fn authenticate_with_public_key(session: &Session, public_key_path: &str) -> Result<bool, Box<dyn std::error::Error>> {
-        let public_key_content = fs::read_to_string(public_key_path)?;
+        if !Path::new(public_key_path).exists() {
+            return Ok(false);
+        }
         
-        session.userauth_pubkey_file("flashcard_user", None, public_key_path, None)?;
+        session.userauth_pubkey_file("flashcard_user", None, Path::new(public_key_path), None)?;
         
         if session.authenticated() {
             println!("Public key authentication successful");
@@ -310,7 +313,7 @@ impl Server {
     /// # Returns
     ///
     /// A `Result` containing an error if the response fails to send
-    fn send_response_via_channel(channel: &ssh2::Channel, response: SSHResponse) -> Result<(), Box<dyn std::error::Error>> {
+    fn send_response_via_channel(channel: &mut ssh2::Channel, response: SSHResponse) -> Result<(), Box<dyn std::error::Error>> {
         let json = serde_json::to_string(&response)?;
         println!("SSH Response: {}", json);
         
@@ -335,7 +338,7 @@ impl Server {
     /// # Returns
     ///
     /// A `Result` containing an error if the request fails to process
-    async fn process_request_with_streaming_via_channel(channel: &ssh2::Channel, request: SSHRequest) -> Result<(), Box<dyn std::error::Error>> {
+    async fn process_request_with_streaming_via_channel(channel: &mut ssh2::Channel, request: SSHRequest) -> Result<(), Box<dyn std::error::Error>> {
         match request.command.as_str() {
             "mcp_tools" => {
                 let registry = McpToolRegistry::new();

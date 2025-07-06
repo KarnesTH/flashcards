@@ -671,6 +671,10 @@ class AIHealthCheckView(APIView):
         
         return Response({
             'ai_service_available': is_available,
-            'ai_service_url': ai_service.ai_base_url
+            'ai_service_type': 'ssh',
+            'ssh_host': ai_service.ssh_host,
+            'ssh_port': ai_service.ssh_port,
+            'ssh_username': ai_service.ssh_username,
+            'available_tools': ai_service.get_available_tools() if is_available else None
         }, status=status.HTTP_200_OK)
     

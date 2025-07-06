@@ -235,5 +235,12 @@ SWAGGER_SETTINGS = {
     'JSON_EDITOR': True,
 }
 
-# AI Service Settings
+# AI Service Settings (SSH-basiert)
+AI_SSH_HOST = os.environ.get('AI_SSH_HOST', 'localhost')
+AI_SSH_PORT = int(os.environ.get('AI_SSH_PORT', '2222'))
+AI_SSH_USERNAME = os.environ.get('AI_SSH_USERNAME', 'flashcard_user')
+AI_SSH_PASSWORD = os.environ.get('AI_SSH_PASSWORD', 'flashcard_secure_password_2024')
+AI_SSH_KEY_PATH = os.environ.get('AI_SSH_KEY_PATH', None)
+
+# Legacy HTTP-Support (für Migration)
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://localhost:3000')
